@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline TTS — Speakit-JS</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; text-align: center; }
+    textarea { width: 100%; height: 120px; font-size: 16px; padding: 10px; margin-bottom: 10px; }
+    select, input { margin: 5px; font-size: 16px; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin: 4px; }
+    .row { margin: 8px 0; }
+    .hint { font-size: 14px; color: #444; margin-top: 24px; }
+    #status { font-size: 14px; margin: 12px 0; min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <h1>Text-to-Speech (Speakit-JS)</h1>
+  <p id="compat"></p>
+
+  <textarea id="text-input" placeholder="Type your text here..."></textarea>
+
+  <div class="row">
+    <label for="voice-select">Voice:</label>
+    <select id="voice-select"></select>
+  </div>
+
+  <div class="row">
+    <label for="rate">Rate:</label>
+    <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1.03">
+    <span id="rate-val">1.03</span>
+  </div>
+
+  <div class="row">
+    <label for="pitch">Pitch:</label>
+    <input type="range" id="pitch" min="0" max="2" step="0.1" value="1">
+    <span id="pitch-val">1</span>
+  </div>
+
+  <div class="row">
+    <button id="speak-btn" type="button">Speak</button>
+    <button id="pause-btn" type="button">Pause</button>
+    <button id="resume-btn" type="button">Resume</button>
+    <button id="stop-btn" type="button">Stop</button>
+  </div>
+
+  <p id="status"></p>
+
+  <p class="hint">
+    Speakit-JS runs from <code>speakit/Speakit1.0.1.min.js</code> (no network). Voices use the browser’s
+    Speech Synthesis API. Based on
+    <a href="https://mobilepadawan.github.io/Speakit-JS/">Speakit-JS</a>.
+  </p>
+
+  <!-- Vendored from https://github.com/mobilepadawan/Speakit-JS — keep speakit/ next to this file for offline use -->
+  <script src="speakit/Speakit1.0.1.min.js"></script>
+  <script>
+    const textInput = document.getElementById('text-input');
+    const voiceSelect = document.getElementById('voice-select');
+    const rateInput = document.getElementById('rate');
+    const pitchInput = document.getElementById('pitch');
+    const rateVal = document.getElementById('rate-val');
+    const pitchVal = document.getElementById('pitch-val');
+    const statusEl = document.getElementById('status');
+    const compatEl = document.getElementById('compat');
+
+    compatEl.textContent = typeof Speakit !== 'undefined' ? Speakit.TTStest() : 'Speakit failed to load.';
+
+    function syncSpeakitTuning() {
+      Speakit.utteranceRate = parseFloat(rateInput.value);
+      Speakit.utterancePitch = parseFloat(pitchInput.value);
+      rateVal.textContent = rateInput.value;
+      pitchVal.textContent = pitchInput.value;
+    }
+
+    rateInput.addEventListener('input', syncSpeakitTuning);
+    pitchInput.addEventListener('input', syncSpeakitTuning);
+    syncSpeakitTuning();
+
+    function loadVoices() {
+      Speakit.getVoices()
+        .then((voices) => {
+          voiceSelect.innerHTML = '';
+          voices.forEach((voice) => {
+            const opt = document.createElement('option');
+            opt.value = voice.lang;
+            opt.dataset.voice = voice.name;
+            opt.textContent = '(' + voice.lang + ') ' + voice.name;
+            voiceSelect.appendChild(opt);
+          });
+        })
+        .catch((err) => {
+          statusEl.textContent = 'Could not load voices: ' + (err && err.message ? err.message : String(err));
+        });
+    }
+
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
+
+    function selectedVoiceName() {
+      const opt = voiceSelect.selectedOptions[0];
+      return opt ? opt.dataset.voice : '';
+    }
+
+    function selectedLang() {
+      const opt = voiceSelect.selectedOptions[0];
+      return opt ? opt.value : 'en-GB';
+    }
+
+    function stopSpeech() {
+      try {
+        speechSynthesis.cancel();
+      } catch (_) { /* ignore */ }
+    }
+
+    document.getElementById('speak-btn').addEventListener('click', () => {
+      const text = textInput.value.trim();
+      if (!text) {
+        alert('Please enter some text!');
+        return;
+      }
+      syncSpeakitTuning();
+      statusEl.textContent = 'Speaking…';
+      stopSpeech();
+      Speakit.readText(text, selectedLang(), selectedVoiceName())
+        .then(() => { statusEl.textContent = 'Done.'; })
+        .catch((err) => {
+          statusEl.textContent = 'Error: ' + (err && err.error ? err.error : String(err));
+        });
+    });
+
+    document.getElementById('pause-btn').addEventListener('click', () => {
+      Speakit.pauseSpeaking();
+      statusEl.textContent = Speakit.isPaused() ? 'Paused.' : statusEl.textContent;
+    });
+
+    document.getElementById('resume-btn').addEventListener('click', () => {
+      Speakit.resumeSpeaking();
+      statusEl.textContent = 'Resumed.';
+    });
+
+    document.getElementById('stop-btn').addEventListener('click', () => {
+      stopSpeech();
+      statusEl.textContent = 'Stopped.';
+    });
+  </script>
+</body>
+</html>

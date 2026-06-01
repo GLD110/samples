@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline TTS App</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; text-align: center; }
+    textarea { width: 100%; height: 120px; font-size: 16px; padding: 10px; margin-bottom: 10px; }
+    select, input { margin: 5px; font-size: 16px; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Offline Text-to-Speech App</h1>
+  
+  <textarea id="text-input" placeholder="Type your text here..."></textarea><br>
+  
+  <label for="voice-select">Voice:</label>
+  <select id="voice-select"></select><br>
+  
+  <label for="rate">Rate:</label>
+  <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1">
+  
+  <label for="pitch">Pitch:</label>
+  <input type="range" id="pitch" min="0" max="2" step="0.1" value="1"><br>
+  
+  <button id="speak-btn">Speak</button>
+
+  <script>
+    const textInput = document.getElementById('text-input');
+    const speakBtn = document.getElementById('speak-btn');
+    const voiceSelect = document.getElementById('voice-select');
+    const rateInput = document.getElementById('rate');
+    const pitchInput = document.getElementById('pitch');
+
+    let voices = [];
+
+    function populateVoices() {
+      voices = speechSynthesis.getVoices();
+      voiceSelect.innerHTML = '';
+      voices.forEach((voice, i) => {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = `${voice.name} (${voice.lang})`;
+        voiceSelect.appendChild(option);
+      });
+    }
+
+    speechSynthesis.onvoiceschanged = populateVoices;
+    populateVoices(); // initial call in case voices are already loaded
+
+    speakBtn.addEventListener('click', () => {
+      const text = textInput.value.trim();
+      if (!text) return alert('Please enter some text!');
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.voice = voices[voiceSelect.value];
+      utterance.rate = parseFloat(rateInput.value);
+      utterance.pitch = parseFloat(pitchInput.value);
+
+      speechSynthesis.speak(utterance);
+    });
+  </script>
+</body>
+</html>
+
