@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>User Donation Tree 🌳</title>
+<style>
+  body { 
+    text-align: center; 
+    font-family: sans-serif; 
+    background: #e0f7fa; 
+    margin: 0; 
+    padding: 0; 
+  }
+  h1 { margin: 20px 0; }
+  #treeContainer { 
+    position: relative; 
+    display: inline-block; 
+    width: 90%; 
+    max-width: 400px; 
+  }
+  #treeBase {
+    width: 100%; 
+    height: auto;
+    display: block;
+  }
+  .leaf {
+    position: absolute;
+    pointer-events: auto;
+    transform-origin: center center;
+    cursor: pointer;
+    opacity: 0;
+    animation: floatLeaf 3s ease forwards;
+  }
+  .leaf:hover {
+    transform: scale(1.4) rotate(0deg);
+    z-index: 10;
+  }
+
+  /* Leaf float animation */
+  @keyframes floatLeaf {
+    0% { transform: scale(0) rotate(0deg); opacity: 0; }
+    50% { transform: scale(1) rotate(var(--rotation)); opacity: 1; }
+    100% { transform: translateY(-10px) scale(1) rotate(var(--rotation)); opacity: 1; }
+  }
+
+  @media(max-width: 480px){
+    #treeContainer { max-width: 300px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Your Donation Tree 🌳</h1>
+
+<div id="treeContainer">
+  <img id="treeBase" src="images/tree-trunk.png" alt="Tree Trunk">
+</div>
+
+<script>
+// Example donation data
+const donations = [
+  { event: 'Tree Planting', joined: true, amount: 50 },
+  { event: 'Reforestation', joined: false, amount: 80 },
+  { event: 'Ocean Cleanup', joined: true, amount: 200 },
+];
+
+// Leaf images based on tier
+const leafImages = [
+  { min: 0, max: 99, src: 'images/leaf-green.png' },   // small donations
+  { min: 100, max: 199, src: 'images/leaf-blue.png' }, // medium donations
+  { min: 200, max: Infinity, src: 'images/leaf-gold.png' } // high donations
+];
+
+const treeContainer = document.getElementById('treeContainer');
+
+function createLeaves(){
+  donations.forEach(donation => {
+    if(!donation.joined) return;
+
+    const numLeaves = Math.min(6, Math.ceil(donation.amount / 50));
+    for(let i=0; i<numLeaves; i++){
+      const leaf = document.createElement('img');
+
+      // choose leaf image based on amount
+      const tier = leafImages.find(t => donation.amount >= t.min && donation.amount <= t.max);
+      leaf.src = tier.src;
+
+      leaf.className = 'leaf';
+
+      // Random position
+      const x = Math.random() * (treeContainer.offsetWidth - 30);
+      const y = Math.random() * (treeContainer.offsetHeight - 50);
+      leaf.style.left = `${x}px`;
+      leaf.style.top = `${y}px`;
+
+      // Leaf size scales with amount
+      const size = 20 + donation.amount / 10;
+      leaf.style.width = `${size}px`;
+
+      // Random rotation
+      const rotation = Math.random() * 360 + 'deg';
+      leaf.style.setProperty('--rotation', rotation);
+      leaf.style.transform = `rotate(${rotation}) scale(0)`;
+
+      // Tooltip
+      leaf.title = `${donation.event} - $${donation.amount}`;
+
+      treeContainer.appendChild(leaf);
+    }
+  });
+}
+
+// Wait for tree image to load to get correct container size
+document.getElementById('treeBase').onload = () => createLeaves();
+
+</script>
+</body>
+</html>
