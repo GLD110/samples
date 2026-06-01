@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Offline-first: no external CSS/JS/fonts. Thumbnails use inline SVG data URIs when image is "". -->
+  <title>Beauty Match — Find Your Routine</title>
+  <style>
+    :root {
+      --bg: #fff8fa;
+      --surface: #ffffff;
+      --text: #2d1f24;
+      --text-muted: #7a656e;
+      --accent: #e91e8c;
+      --accent-soft: rgba(233, 30, 140, 0.12);
+      --accent-deep: #c2186d;
+      --border: #f3dfe8;
+      --shadow: 0 8px 32px rgba(45, 31, 36, 0.08);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      background: linear-gradient(165deg, var(--bg) 0%, #ffeef5 45%, #fff 100%);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 1.25rem 1.25rem 3rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header.brand {
+      text-align: center;
+      padding: 0.5rem 0 1rem;
+    }
+
+    .brand-mark {
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    h1 {
+      font-size: clamp(1.65rem, 5vw, 2.15rem);
+      font-weight: 600;
+      margin: 0.35rem 0 0;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin: 0.5rem 0 0;
+    }
+
+    .panel {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 1.75rem 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity var(--transition), transform var(--transition);
+    }
+
+    .screen.is-active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .screen.is-leaving {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+
+    .progress-wrap {
+      margin-bottom: 1.25rem;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.45rem;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), #ff6ba8);
+      border-radius: 99px;
+      transition: width var(--transition);
+    }
+
+    .question-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent-deep);
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+
+    .question-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin: 0 0 1.25rem;
+    }
+
+    #quiz-content {
+      transition: opacity 0.28s ease;
+    }
+
+    .choices {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .choice {
+      appearance: none;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      padding: 0.95rem 1.1rem;
+      font-size: 1rem;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+      color: var(--text);
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+
+    .choice:hover {
+      border-color: rgba(233, 30, 140, 0.35);
+      background: var(--accent-soft);
+    }
+
+    .choice:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .choice-desc {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .hero-illustration {
+      width: 100%;
+      max-width: 280px;
+      margin: 1rem auto 1.5rem;
+      aspect-ratio: 1;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(circle at 30% 30%, rgba(255, 224, 239, 0.65) 0%, transparent 55%),
+        radial-gradient(circle at 70% 60%, rgba(233, 30, 140, 0.12) 0%, transparent 50%),
+        url("logo.webp");
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .btn-row {
+      margin-top: auto;
+      padding-top: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: inherit;
+      border-radius: 99px;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(233, 30, 140, 0.35);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 28px rgba(233, 30, 140, 0.45);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 2px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--accent-deep);
+    }
+
+    .results-header {
+      margin-bottom: 1rem;
+    }
+
+    .results-header h2 {
+      margin: 0 0 0.35rem;
+      font-size: 1.35rem;
+    }
+
+    .fallback-note {
+      background: var(--accent-soft);
+      border: 1px solid rgba(233, 30, 140, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      color: var(--accent-deep);
+      margin-bottom: 1rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+
+    @media (min-width: 600px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 900px) {
+      .app {
+        max-width: 960px;
+      }
+      .grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow);
+      transform: translateY(-2px);
+    }
+
+    .card-img-wrap {
+      aspect-ratio: 1;
+      background: linear-gradient(145deg, #fce8f0, #fff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .card-body {
+      padding: 0.9rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 0.35rem;
+    }
+
+    .card-cat {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .card-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    .card-price {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.25rem;
+    }
+
+    .badge {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.45rem;
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .badge.match {
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+      border-color: rgba(233, 30, 140, 0.25);
+    }
+
+    .card-actions {
+      margin-top: auto;
+      padding-top: 0.65rem;
+    }
+
+    .btn-buy {
+      width: 100%;
+      padding: 0.55rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: inherit;
+      border-radius: 8px;
+      border: none;
+      background: var(--text);
+      color: #fff;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      display: block;
+    }
+
+    .btn-buy:hover {
+      opacity: 0.9;
+    }
+
+    .score-hint {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    footer.note {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="brand">
+      <div class="brand-mark">Lumière Beauty Lab</div>
+    </header>
+
+    <main class="panel">
+      <!-- Start -->
+      <section id="screen-start" class="screen is-active" aria-live="polite">
+        <h1>Find your beauty match</h1>
+        <p class="subtitle">A quick quiz to surface routines and products tailored to you — all offline, no account needed.</p>
+        <div class="hero-illustration" aria-hidden="true"></div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-primary" id="btn-begin">Start quiz</button>
+        </div>
+      </section>
+
+      <!-- Quiz -->
+      <section id="screen-quiz" class="screen" aria-live="polite">
+        <div class="progress-wrap">
+          <div class="progress-meta">
+            <span id="progress-step">Step 1 / 4</span>
+            <span id="progress-pct">25%</span>
+          </div>
+          <div class="progress-bar" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1" id="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+        </div>
+        <div id="quiz-content"></div>
+      </section>
+
+      <!-- Results -->
+      <section id="screen-results" class="screen" aria-live="polite">
+        <div class="results-header">
+          <h2>Your top picks</h2>
+          <p class="subtitle" id="results-subtitle">Curated from your answers.</p>
+        </div>
+        <div id="fallback-banner" class="fallback-note" hidden></div>
+        <div id="results-grid" class="grid"></div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-primary" id="btn-retake">Retake quiz</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="note">Runs offline from this file; expand <code>products</code> to 100+ items anytime. Add real <code>link</code> URLs when you publish online.</footer>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /**
+       * Product catalog — add objects to scale beyond 30.
+       * Tags use lowercase for consistent matching.
+       * image: leave "" to auto-fill with an inline SVG (works on file:// with no network).
+       * link: optional; use "" offline, or a relative path (e.g. "details.html?id=1") / https when hosted.
+       */
+      const products = [
+        { id: 1, name: "Hydra Veil Serum", category: "skincare", tags: ["dry", "sensitive", "hydration", "glow", "simple", "anti-aging"], price: "$42", image: "", link: "" },
+        { id: 2, name: "Cloud Cream Moisturizer", category: "skincare", tags: ["dry", "combination", "hydration", "sensitive", "simple"], price: "$38", image: "", link: "" },
+        { id: 3, name: "Balance Foam Cleanser", category: "skincare", tags: ["oily", "combination", "acne", "simple", "minimal"], price: "$24", image: "", link: "" },
+        { id: 4, name: "Matte Control SPF 40", category: "skincare", tags: ["oily", "matte", "combination", "simple", "minimal"], price: "$34", image: "", link: "" },
+        { id: 5, name: "Calm Barrier Cream", category: "skincare", tags: ["sensitive", "dry", "hydration", "simple", "anti-aging"], price: "$46", image: "", link: "" },
+        { id: 6, name: "Glow Drops Essence", category: "skincare", tags: ["glow", "dry", "anti-aging", "full", "medium"], price: "$52", image: "", link: "" },
+        { id: 7, name: "Clarify BHA Toner", category: "skincare", tags: ["oily", "acne", "combination", "simple", "minimal"], price: "$28", image: "", link: "" },
+        { id: 8, name: "Peptide Night Cream", category: "skincare", tags: ["anti-aging", "dry", "full", "medium", "glow"], price: "$58", image: "", link: "" },
+        { id: 9, name: "Luminous Skin Tint", category: "makeup", tags: ["glow", "natural", "dry", "minimal", "simple"], price: "$36", image: "", link: "" },
+        { id: 10, name: "Soft Matte Foundation", category: "makeup", tags: ["matte", "oily", "bold", "full", "medium"], price: "$44", image: "", link: "" },
+        { id: 11, name: "Featherlight Concealer", category: "makeup", tags: ["natural", "minimal", "sensitive", "simple", "dry"], price: "$26", image: "", link: "" },
+        { id: 12, name: "Velvet Lip Stain Set", category: "makeup", tags: ["bold", "full", "matte", "glow"], price: "$32", image: "", link: "" },
+        { id: 13, name: "Rose Quartz Blush", category: "makeup", tags: ["natural", "glow", "minimal", "simple", "hydration"], price: "$22", image: "", link: "" },
+        { id: 14, name: "Glass Highlighter Balm", category: "makeup", tags: ["glow", "natural", "full", "bold", "dry"], price: "$28", image: "", link: "" },
+        { id: 15, name: "Precision Brow Gel", category: "makeup", tags: ["minimal", "natural", "simple", "oily", "combination"], price: "$18", image: "", link: "" },
+        { id: 16, name: "Citrus Bright Body Oil", category: "body", tags: ["glow", "dry", "hydration", "simple", "natural"], price: "$30", image: "", link: "" },
+        { id: 17, name: "Silk Hair Mist", category: "hair", tags: ["glow", "minimal", "natural", "hydration"], price: "$24", image: "", link: "" },
+        { id: 18, name: "Purifying Clay Mask", category: "skincare", tags: ["oily", "acne", "matte", "medium", "combination"], price: "$30", image: "", link: "" },
+        { id: 19, name: "Ceramide Repair Balm", category: "skincare", tags: ["sensitive", "dry", "anti-aging", "simple", "hydration"], price: "$40", image: "", link: "" },
+        { id: 20, name: "Daily Vitamin C Serum", category: "skincare", tags: ["glow", "anti-aging", "acne", "medium", "combination"], price: "$48", image: "", link: "" },
+        { id: 21, name: "No-Makeup Lip Oil", category: "makeup", tags: ["minimal", "natural", "hydration", "sensitive", "glow"], price: "$20", image: "", link: "" },
+        { id: 22, name: "Full Glam Eye Palette", category: "makeup", tags: ["bold", "full", "matte", "glow"], price: "$54", image: "", link: "" },
+        { id: 23, name: "Micellar Gentle Water", category: "skincare", tags: ["sensitive", "minimal", "simple", "dry", "combination"], price: "$22", image: "", link: "" },
+        { id: 24, name: "Retinol Renewal Drops", category: "skincare", tags: ["anti-aging", "acne", "medium", "oily", "combination"], price: "$62", image: "", link: "" },
+        { id: 25, name: "Sheer Pressed Powder", category: "makeup", tags: ["matte", "oily", "natural", "simple", "minimal"], price: "$26", image: "", link: "" },
+        { id: 26, name: "Barrier Lip Mask", category: "skincare", tags: ["dry", "sensitive", "hydration", "simple", "anti-aging"], price: "$16", image: "", link: "" },
+        { id: 27, name: "Omni Routine Kit", category: "sets", tags: ["full", "medium", "glow", "hydration", "natural", "bold"], price: "$120", image: "", link: "" },
+        { id: 28, name: "Quick Refresh Face Mist", category: "skincare", tags: ["simple", "glow", "minimal", "combination", "sensitive"], price: "$19", image: "", link: "" },
+        { id: 29, name: "Satin Lipstick — Rouge", category: "makeup", tags: ["bold", "full", "glow", "natural"], price: "$30", image: "", link: "" },
+        { id: 30, name: "Prebiotic Cleansing Oil", category: "skincare", tags: ["dry", "sensitive", "minimal", "hydration", "anti-aging"], price: "$34", image: "", link: "" }
+      ];
+
+      (function assignOfflinePlaceholders() {
+        var palettes = [
+          ["#fce8f0", "#e91e8c"],
+          ["#fff0f5", "#c2186d"],
+          ["#ffeef5", "#7a656e"],
+          ["#f5f5f5", "#e91e8c"],
+          ["#fcf0f5", "#c2186d"],
+          ["#fff8fa", "#e91e8c"],
+          ["#ffffff", "#7a656e"],
+          ["#fdf2f8", "#e91e8c"],
+          ["#fff5f8", "#e91e8c"],
+          ["#fff9c4", "#c2186d"]
+        ];
+        function esc(s) {
+          return String(s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+        products.forEach(function (p, i) {
+          if (p.image && String(p.image).trim()) {
+            return;
+          }
+          var pal = palettes[i % palettes.length];
+          var label = esc(p.name.length > 22 ? p.name.slice(0, 21) + "…" : p.name);
+          var svg =
+            '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">' +
+            '<rect fill="' +
+            pal[0] +
+            '" width="400" height="400"/>' +
+            '<text x="200" y="200" dominant-baseline="middle" text-anchor="middle" fill="' +
+            pal[1] +
+            '" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="600">' +
+            label +
+            "</text></svg>";
+          p.image = "data:image/svg+xml," + encodeURIComponent(svg);
+        });
+      })();
+
+      /** Fallback when tag intersection scores are tied at zero — curated “general” picks */
+      const GENERAL_PRODUCT_IDS = [2, 9, 3, 16, 23, 28, 11, 21];
+
+      const QUIZ_STEPS = [
+        {
+          key: "skinType",
+          label: "Skin type",
+          title: "How would you describe your skin?",
+          options: [
+            { id: "dry", text: "Dry", desc: "Tight, flaky, or thirsty", tags: ["dry"] },
+            { id: "oily", text: "Oily", desc: "Shine-prone, larger pores", tags: ["oily"] },
+            { id: "combination", text: "Combination", desc: "Oily T-zone, dry elsewhere", tags: ["combination"] },
+            { id: "sensitive", text: "Sensitive", desc: "Easily irritated or reactive", tags: ["sensitive"] }
+          ]
+        },
+        {
+          key: "skinGoal",
+          label: "Skin goal",
+          title: "What is your top skin goal right now?",
+          options: [
+            { id: "glow", text: "Radiance & glow", desc: "Dewy, healthy-looking skin", tags: ["glow"] },
+            { id: "acne", text: "Clear & calm", desc: "Breakouts, texture, clarity", tags: ["acne"] },
+            { id: "anti-aging", text: "Firm & renew", desc: "Lines, elasticity, prevention", tags: ["anti-aging"] },
+            { id: "hydration", text: "Deep hydration", desc: "Plump, comfortable barrier", tags: ["hydration"] }
+          ]
+        },
+        {
+          key: "makeupStyle",
+          label: "Makeup style",
+          title: "What makeup vibe fits you best?",
+          options: [
+            { id: "natural", text: "Natural", desc: "Your skin but refined", tags: ["natural"] },
+            { id: "bold", text: "Bold", desc: "Statement color & contrast", tags: ["bold"] },
+            { id: "full", text: "Full glam", desc: "Camera-ready, full coverage", tags: ["full"] },
+            { id: "minimal", text: "Minimal", desc: "Barely-there, quick routine", tags: ["minimal"] }
+          ]
+        },
+        {
+          key: "routine",
+          label: "Routine",
+          title: "How much time do you like to spend on routine?",
+          options: [
+            { id: "simple", text: "Simple", desc: "3 steps or fewer when possible", tags: ["simple"] },
+            { id: "medium", text: "Medium", desc: "A balanced daily ritual", tags: ["medium"] },
+            { id: "full", text: "Full routine", desc: "Layering, treatments, the works", tags: ["full"] }
+          ]
+        }
+      ];
+
+      const RESULT_COUNT = { min: 6, max: 10 };
+
+      const els = {
+        start: document.getElementById("screen-start"),
+        quiz: document.getElementById("screen-quiz"),
+        results: document.getElementById("screen-results"),
+        quizContent: document.getElementById("quiz-content"),
+        progressStep: document.getElementById("progress-step"),
+        progressPct: document.getElementById("progress-pct"),
+        progressFill: document.getElementById("progress-fill"),
+        progressBar: document.getElementById("progress-bar"),
+        resultsGrid: document.getElementById("results-grid"),
+        resultsSubtitle: document.getElementById("results-subtitle"),
+        fallbackBanner: document.getElementById("fallback-banner"),
+        btnBegin: document.getElementById("btn-begin"),
+        btnRetake: document.getElementById("btn-retake")
+      };
+
+      let userProfileTags = [];
+      let quizStepIndex = 0;
+
+      function normalizeTag(t) {
+        return String(t).toLowerCase().trim();
+      }
+
+      function scoreProduct(product, profileSet) {
+        const tagSet = new Set(product.tags.map(normalizeTag));
+        let n = 0;
+        profileSet.forEach(function (t) {
+          if (tagSet.has(t)) n += 1;
+        });
+        return n;
+      }
+
+      function showScreen(next, prev) {
+        if (prev) {
+          prev.classList.add("is-leaving");
+          prev.classList.remove("is-active");
+        }
+        setTimeout(function () {
+          if (prev) prev.classList.remove("is-leaving");
+          next.classList.add("is-active");
+        }, prev ? 180 : 0);
+      }
+
+      function resetQuizState() {
+        userProfileTags = [];
+        quizStepIndex = 0;
+        els.quizContent.innerHTML = "";
+        els.quizContent.style.opacity = "1";
+        els.resultsGrid.innerHTML = "";
+        els.fallbackBanner.hidden = true;
+        els.fallbackBanner.textContent = "";
+      }
+
+      function updateProgress() {
+        const total = QUIZ_STEPS.length;
+        const step = quizStepIndex + 1;
+        const pct = Math.round((step / total) * 100);
+        els.progressStep.textContent = "Step " + step + " / " + total;
+        els.progressPct.textContent = pct + "%";
+        els.progressFill.style.width = pct + "%";
+        els.progressBar.setAttribute("aria-valuenow", String(step));
+      }
+
+      function mountQuizStep() {
+        const step = QUIZ_STEPS[quizStepIndex];
+
+        const frag = document.createDocumentFragment();
+        const label = document.createElement("div");
+        label.className = "question-label";
+        label.textContent = step.label;
+        frag.appendChild(label);
+
+        const title = document.createElement("h2");
+        title.className = "question-title";
+        title.textContent = step.title;
+        frag.appendChild(title);
+
+        const choices = document.createElement("div");
+        choices.className = "choices";
+
+        step.options.forEach(function (opt) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "choice";
+          btn.dataset.optionId = opt.id;
+          const span = document.createElement("span");
+          span.textContent = opt.text;
+          btn.appendChild(span);
+          if (opt.desc) {
+            const d = document.createElement("span");
+            d.className = "choice-desc";
+            d.textContent = opt.desc;
+            btn.appendChild(d);
+          }
+          btn.addEventListener("click", function () {
+            opt.tags.forEach(function (t) {
+              userProfileTags.push(normalizeTag(t));
+            });
+            if (quizStepIndex < QUIZ_STEPS.length - 1) {
+              quizStepIndex += 1;
+              renderQuizStep();
+            } else {
+              showResults();
+            }
+          });
+          choices.appendChild(btn);
+        });
+
+        frag.appendChild(choices);
+        els.quizContent.innerHTML = "";
+        els.quizContent.appendChild(frag);
+      }
+
+      function renderQuizStep() {
+        updateProgress();
+        var hasPrior = els.quizContent.childNodes.length > 0;
+        if (hasPrior) {
+          els.quizContent.style.opacity = "0";
+          setTimeout(function () {
+            mountQuizStep();
+            els.quizContent.style.opacity = "1";
+          }, 220);
+        } else {
+          mountQuizStep();
+        }
+      }
+
+      function getRecommendations() {
+        const profileSet = new Set(userProfileTags.map(normalizeTag));
+        const scored = products.map(function (p) {
+          return {
+            product: p,
+            score: scoreProduct(p, profileSet),
+            matchedTags: userProfileTags.filter(function (t) {
+              return p.tags.map(normalizeTag).includes(normalizeTag(t));
+            })
+          };
+        });
+
+        scored.sort(function (a, b) {
+          if (b.score !== a.score) return b.score - a.score;
+          return String(a.product.name).localeCompare(String(b.product.name));
+        });
+
+        const maxScore = scored.length ? scored[0].score : 0;
+        const useFallback = maxScore === 0;
+
+        let list;
+        if (useFallback) {
+          const generalMap = new Map(products.map(function (p) { return [p.id, p]; }));
+          list = GENERAL_PRODUCT_IDS.map(function (id) { return generalMap.get(id); }).filter(Boolean);
+          if (list.length < RESULT_COUNT.min) {
+            list = products.slice(0, RESULT_COUNT.max);
+          }
+        } else {
+          list = scored.filter(function (s) { return s.score > 0; }).map(function (s) { return s.product; });
+          if (list.length < RESULT_COUNT.min) {
+            list = scored.map(function (s) { return s.product; });
+          }
+        }
+
+        const count = Math.min(RESULT_COUNT.max, Math.max(RESULT_COUNT.min, list.length));
+        const top = list.slice(0, count);
+
+        return { top: top, useFallback: useFallback, maxScore: maxScore, scored: scored };
+      }
+
+      function renderResults() {
+        const { top, useFallback, maxScore } = getRecommendations();
+
+        if (useFallback) {
+          els.fallbackBanner.hidden = false;
+          els.fallbackBanner.textContent =
+            "No strong tag matches from your answers — here are our best versatile picks that work for most routines.";
+          els.resultsSubtitle.textContent = "Hand-picked essentials while we learn your preferences.";
+        } else {
+          els.fallbackBanner.hidden = true;
+          els.resultsSubtitle.textContent =
+            "Sorted by how many of your preferences overlap each product’s tags — strongest fit shares up to " +
+            maxScore +
+            " tags with your profile.";
+        }
+
+        const profileSet = new Set(userProfileTags.map(normalizeTag));
+        els.resultsGrid.innerHTML = "";
+
+        top.forEach(function (p) {
+          const score = scoreProduct(p, profileSet);
+          const card = document.createElement("article");
+          card.className = "card";
+
+          const imgWrap = document.createElement("div");
+          imgWrap.className = "card-img-wrap";
+          const img = document.createElement("img");
+          img.className = "card-img";
+          img.src = p.image;
+          img.alt = p.name;
+          img.loading = "lazy";
+          imgWrap.appendChild(img);
+
+          const body = document.createElement("div");
+          body.className = "card-body";
+
+          const cat = document.createElement("div");
+          cat.className = "card-cat";
+          cat.textContent = p.category;
+
+          const name = document.createElement("h3");
+          name.className = "card-name";
+          name.textContent = p.name;
+
+          const price = document.createElement("div");
+          price.className = "card-price";
+          price.textContent = p.price;
+
+          const badges = document.createElement("div");
+          badges.className = "badges";
+          p.tags.forEach(function (t) {
+            const b = document.createElement("span");
+            b.className = "badge" + (profileSet.has(normalizeTag(t)) ? " match" : "");
+            b.textContent = t;
+            badges.appendChild(b);
+          });
+
+          const hint = document.createElement("div");
+          hint.className = "score-hint";
+          hint.textContent = score > 0 ? score + " profile match" + (score === 1 ? "" : "es") : "Broad appeal pick";
+
+          const actions = document.createElement("div");
+          actions.className = "card-actions";
+          if (p.link && String(p.link).trim()) {
+            const a = document.createElement("a");
+            a.className = "btn-buy";
+            a.href = p.link;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.textContent = "Buy now";
+            actions.appendChild(a);
+          }
+
+          body.appendChild(cat);
+          body.appendChild(name);
+          body.appendChild(price);
+          body.appendChild(badges);
+          body.appendChild(hint);
+          body.appendChild(actions);
+
+          card.appendChild(imgWrap);
+          card.appendChild(body);
+          els.resultsGrid.appendChild(card);
+        });
+      }
+
+      function showResults() {
+        renderResults();
+        showScreen(els.results, els.quiz);
+      }
+
+      els.btnBegin.addEventListener("click", function () {
+        resetQuizState();
+        quizStepIndex = 0;
+        renderQuizStep();
+        showScreen(els.quiz, els.start);
+      });
+
+      els.btnRetake.addEventListener("click", function () {
+        resetQuizState();
+        quizStepIndex = 0;
+        renderQuizStep();
+        showScreen(els.quiz, els.results);
+      });
+    })();
+  </script>
+</body>
+</html>
