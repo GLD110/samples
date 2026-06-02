@@ -1,0 +1,278 @@
+UNDERWRITING ECONOMICS IN A SIMPLIFIED INSURANCE BOOK: AN INTERACTIVE MODEL AND FINANCIAL ANALYSIS
+=================================================================================================
+
+Master's thesis (Finance)
+Author: [Your Name]
+Institution: [Your University]
+Date: June 2026
+
+Note for submission: This document analyzes the open educational repository Insurance Company Simulator. Quantitative tables in Section 6 are computed from the deterministic formulas in src/lib/calculations.ts with default and preset parameters in src/lib/scenarios.ts. Replace bracketed fields before submitting; attach Export JSON or screenshots to verify your runs.
+
+
+------------------------------------------------------------------------
+
+
+Abstract
+--------
+
+Property and casualty insurers combine underwriting results with investment income to generate overall profitability. Finance students often encounter loss ratio and combined ratio before they can trace how pricing, claim frequency, severity, expenses, and float interact on a single income statement. This thesis presents a transparent, browser-based simulation that links premium pricing, expected claims, expense loading, fraud or leakage assumptions, inflation stress, and a stylized investment return on premium volume to standard performance metrics and net profit or loss. The model is intentionally simplified so every equation is auditable in client-side TypeScript. I specify the mathematics as implemented, report illustrative numerical outcomes for baseline and stress scenarios, derive the closed-form premium that targets a 95% combined ratio, and discuss limitations relative to statutory reporting and risk-based capital frameworks. The contribution for a finance audience is to make sensitivity analysis and ratio algebra tangible through reproducible exports suitable for appendices or presentations.
+
+Keywords: insurance, combined ratio, loss ratio, premium adequacy, float, sensitivity analysis, educational simulation
+
+
+------------------------------------------------------------------------
+
+
+1. Introduction
+---------------
+
+Insurance companies are analyzed in finance courses alongside banks and industrial firms, yet their income statement logic differs in important ways. Premiums are collected before claims are fully known, creating timing gaps that generate investable float. Underwriting profitability is commonly summarized by ratios that compare incurred losses and expenses to earned or written premium (Rejda & McNamara, 2020; Harrington & Niehaus, 2003). Students who encounter these ratios for the first time may struggle to connect them to pricing decisions and to macroeconomic stressors such as inflation or elevated claims leakage.
+
+The Insurance Company Simulator is a client-side React application that encodes a small set of assumptions into a fully observable model. Every quantity on the dashboard is computed from user-controlled sliders; there is no hidden server logic. This thesis uses that model as the object of study: I state the equations as implemented, interpret them in standard insurance-finance language, and present a compact set of numerical experiments analogous to scenario analysis in a spreadsheet.
+
+The central research questions are practical rather than econometric:
+
+1. How do loss ratio and combined ratio respond to simultaneous changes in claim frequency, severity, fraud loading, and operating expenses?
+2. How does a simplified investment return on premium volume affect profit when underwriting is weak?
+3. What premium per policyholder is algebraically consistent with a target combined ratio, holding claims and the expense ratio fixed?
+
+Section 2 reviews core concepts. Section 3 specifies the model. Section 4 explains methodology and scenarios. Section 5 describes implementation. Section 6 reports illustrative results. Section 7 discusses limitations. Section 8 concludes.
+
+
+------------------------------------------------------------------------
+
+
+2. Conceptual and theoretical background
+----------------------------------------
+
+2.1 Premiums, losses, and expenses
+
+In property and casualty insurance, gross premium is the price charged for coverage. Incurred losses represent the insurer's best estimate of amounts owed for covered events. Underwriting expenses include acquisition costs, administrative overhead, and claims-handling expenses. Finance-oriented discussions often compress these into loss ratio and expense ratio relative to premium revenue.
+
+The loss ratio is commonly expressed as incurred losses divided by premium revenue. Values below 100% indicate that, before expenses, premium covered losses on that narrow definition; values above 100% indicate underwriting strain.
+
+The combined ratio adds the expense burden to the loss burden, again scaled by premium. A combined ratio below 100% is often described as an underwriting profit on that metric, though total firm profitability still depends on investment results, reinsurance, taxes, and capital costs (Rejda & McNamara, 2020).
+
+2.2 Float and investment income
+
+Because premiums arrive before claims are paid, insurers may invest liquid assets. The simulator models investment income in a deliberately reduced form: it scales premium revenue by an annual return and by policy length in years. This is not a cash-flow projection of reserves; it is a teaching device to show directionally how investment income can offset weak underwriting.
+
+2.3 Stress testing and scenario analysis
+
+Financial institutions use stress tests to evaluate resilience to adverse paths for risk factors. The application's preset scenarios (Normal Market, High Inflation, High Fraud, Catastrophe Event) bundle parameter shifts so students can compare outcomes without manually tuning many sliders.
+
+
+------------------------------------------------------------------------
+
+
+3. Model specification
+----------------------
+
+This section mirrors src/lib/calculations.ts and GUIDE.md. Percentages entered by the user are converted to decimals inside the code.
+
+3.1 Inputs
+
+Let:
+- n = number of policyholders
+- p = probability of a claim in the period (user percentage / 100, clipped to [0,1])
+- c-bar = average claim size (severity)
+- f = fraud rate as a percentage; the code applies multiplicative load (1 + f/100) to total expected claim cost
+- pi = premium per policyholder
+- e = operating cost as a percentage of premium revenue (expense ratio e/100)
+- r = annual investment return as a percentage (r/100)
+- T = policy length in years (months / 12 if the user selects months)
+
+Volatility (low, medium, high) scales random noise in the multi-period chart simulation only; headline dashboard metrics use expected (mean) claims.
+
+3.2 Single-period expected metrics (dashboard)
+
+Expected claims = p * n
+Total claim cost = Expected claims * c-bar
+Fraud-adjusted claims = Total claim cost * (1 + f/100)
+Premium revenue = pi * n
+Operating costs = Premium revenue * (e/100)
+Investment income = Premium revenue * (r/100) * T
+Profit or loss = Premium revenue + Investment income - Fraud-adjusted claims - Operating costs
+
+When Premium revenue > 0:
+Loss ratio (LR) = Fraud-adjusted claims / Premium revenue
+Combined ratio (CR) = (Fraud-adjusted claims + Operating costs) / Premium revenue
+
+3.3 Multi-period simulation (charts)
+
+For each period i = 1,...,24, severity compounds with inflation factor (1 + g)^(i/12) where g is the annual inflation rate as a decimal. Expected claim count remains p * n each period. A bounded random multiplier perturbs paid claims according to volatility. Premium revenue, operating costs, and investment income are held at single-period levels derived from current sliders. The line chart illustrates path risk around a fixed pricing decision, not a full dynamic capital model.
+
+3.4 Target combined ratio and optimal premium
+
+Holding fraud-adjusted claims C independent of pi in this specification:
+
+CR(pi) = (C + pi * n * e') / (pi * n) = C/(pi * n) + e'
+
+where e' = e/100. Setting CR = tau (e.g., tau = 0.95) yields:
+
+pi* = C / (n * (tau - e'))
+
+provided tau > e'. The Auto optimize premium control implements this closed form. If e' >= tau, no finite premium can achieve the target.
+
+
+------------------------------------------------------------------------
+
+
+4. Methodology
+--------------
+
+4.1 Software and reproducibility
+
+The application is built with React and TypeScript (Vite toolchain). Calculations are deterministic functions of inputs. The user may Export JSON containing the parameter vector, computed metrics, and simulated path for appendices.
+
+4.2 Experimental design
+
+I compare five configurations:
+
+1. Baseline — defaultParams in src/lib/scenarios.ts
+2. Normal Market — preset overlay
+3. High Inflation — preset overlay
+4. High Fraud — preset overlay
+5. Catastrophe Event — preset overlay
+
+For each configuration I record premium revenue, fraud-adjusted claims, operating costs, investment income, profit or loss, loss ratio, and combined ratio using Section 3.2. Unless a preset overrides them: pi = 580, n = 5000, T = 1 year, baseline operating and investment parameters apply.
+
+
+------------------------------------------------------------------------
+
+
+5. Implementation overview
+--------------------------
+
+Layer       | Technology              | Role
+Frontend    | React, TypeScript, Vite | Sliders, KPI dashboard, scenario buttons
+Styling     | Tailwind CSS v4         | Layout and theme
+Charts      | Recharts                | 24-period profit path, bar and pie views
+Logic       | src/lib/calculations.ts | computePeriodMetrics, simulateProfitPath, premiumForTargetCombinedRatio
+Presets     | src/lib/scenarios.ts    | defaultParams and scenarioPresets
+
+There is no backend. Saved scenarios persist in browser localStorage (key ics-saved-scenarios). All headline metrics use expected claims; charts add stochastic volatility and inflation drift for illustration.
+
+
+------------------------------------------------------------------------
+
+
+6. Illustrative results
+-----------------------
+
+6.1 Baseline
+
+Using p = 8%, c-bar = 4,200, f = 4%, e = 18%, r = 4%, T = 1, pi = 580, n = 5,000:
+
+  Expected claims              400
+  Total claim cost             $1,680,000
+  Fraud-adjusted claims        $1,747,200
+  Premium revenue              $2,900,000
+  Operating costs              $522,000
+  Investment income            $116,000
+  Profit / loss                $746,800
+  Loss ratio                   60.2%
+  Combined ratio               78.3%
+
+6.2 Scenario comparison (same pi, n, T unless preset changes them)
+
+Normal Market (p = 7%, c-bar = 4,000, f = 3%, r = 4.5%):
+  Profit / loss $1,066,500 | Loss ratio 49.7% | Combined ratio 67.7%
+
+High Inflation (c-bar = 4,800, e = 22%, r = 3%):
+  Profit / loss $352,200 | Loss ratio 68.9% | Combined ratio 90.9%
+
+High Fraud (p = 9%, c-bar = 4,500, f = 14%):
+  Profit / loss $185,500 | Loss ratio 79.6% | Combined ratio 97.6%
+
+Catastrophe Event (p = 22%, c-bar = 12,000, f = 6%):
+  Profit / loss -$11,498,000 | Loss ratio 482.5% | Combined ratio 503.9%
+
+6.3 Interpretation
+
+Severity and frequency enter multiplicatively through expected claim cost; the catastrophe scenario pushes ratios far beyond 100%, overwhelming operating costs and the small investment credit. The expense ratio is a direct wedge in the combined ratio: high inflation raises operating costs to 22% of premium revenue and combined ratio approaches 91%. Fraud loading acts as a multiplicative shifter on losses; high fraud pushes combined ratio toward 100% even when premium per policyholder is unchanged.
+
+6.4 Target combined ratio premium (baseline claims)
+
+For C = 1,747,200, n = 5,000, e' = 0.18, tau = 0.95:
+
+pi* = 1,747,200 / (5,000 * (0.95 - 0.18)) = 453.82 (approx.)
+
+Students can verify in the app via Auto optimize premium or Export JSON.
+
+
+------------------------------------------------------------------------
+
+
+7. Limitations, regulation, and ethics
+--------------------------------------
+
+The model is pedagogical, not actuarial. It does not distinguish written versus earned premium, loss development triangles, reinsurance, regulatory capital, or discounting of liabilities. Investment income is proportional to premium volume rather than tied to a dynamic reserve balance. The fraud term is a scalar load rather than a behavioral equilibrium. Chart randomness uses a deterministic pseudo-random seed for repeatability but is not calibrated to historical loss distributions.
+
+Students may extend the discussion with a single real-company case from an annual report or 10-K, comparing directional conclusions only. Fraud parameters are highly stylized and must not be used to stereotype policyholders.
+
+
+------------------------------------------------------------------------
+
+
+8. Conclusion
+-------------
+
+This thesis paired a transparent insurance underwriting toy model with ratio-based finance metrics. The implemented equations map from classroom definitions of loss and combined ratios to profit and loss, with an optional investment term. Numerical experiments show that catastrophe-style shocks dominate outcomes, while inflation-via-severity and higher expense ratios erode profitability more gradually. The closed-form premium for a target combined ratio reinforces algebra skills and clarifies why expense ratios must sit below the target for a finite solution to exist. The Insurance Company Simulator makes these relationships interactive and exportable for finance coursework and presentations.
+
+
+------------------------------------------------------------------------
+
+
+References
+----------
+
+Cummins, J. D., & Outreville, J. F. (1987). An international analysis of underwriting cycles in property-liability insurance. Journal of Risk and Insurance, 54(2), 246-262.
+
+Harrington, S. E., & Niehaus, G. R. (2003). Risk Management and Insurance (2nd ed.). McGraw-Hill/Irwin.
+
+Rejda, G. E., & McNamara, M. J. (2020). Principles of Risk Management and Insurance (14th ed.). Pearson.
+
+(Substitute or add sources assigned by your instructor, including any insurer annual report cited in an appendix.)
+
+
+------------------------------------------------------------------------
+
+
+Appendix A. Default and scenario parameters
+-------------------------------------------
+
+Baseline (defaultParams): claim probability 8%; average claim $4,200; 5,000 policyholders; premium $580; policy 1 year; operating cost 18% of premium; fraud 4%; inflation 2.5%; investment return 4%.
+
+Preset overlays (merged with baseline in code):
+- Normal Market: 7% claim probability; $4,000 average claim; 3% fraud; 2% inflation; 4.5% investment return.
+- High Inflation: 8% inflation; $4,800 average claim; 3% investment; 22% operating cost.
+- High Fraud: 14% fraud; 9% claim probability; $4,500 average claim.
+- Catastrophe Event: 22% claim probability; $12,000 average claim; 6% fraud; volatility high (charts).
+
+
+------------------------------------------------------------------------
+
+
+Appendix B. Reproducibility
+---------------------------
+
+1. Clone or obtain the Insurance Company Simulator repository.
+2. Run npm install and npm run dev per GUIDE.md.
+3. Open http://localhost:5173 (or the URL shown in the terminal).
+4. Run baseline and each scenario preset; use Export JSON for frozen runs.
+5. Replace bracketed author/institution fields; attach screenshots as Figure 1, Figure 2, etc.
+
+
+------------------------------------------------------------------------
+
+
+Appendix C. Disclosure
+----------------------
+
+The author has no financial interest in the software. The prototype is for education and demonstration only and is not insurance advice, an offer of coverage, or a filing-ready underwriting model.
+
+
+------------------------------------------------------------------------
+
+End of thesis draft.

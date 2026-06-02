@@ -1,0 +1,271 @@
+================================================================================
+MASTER'S THESIS OUTLINE — ECONOMICS
+Interactive Decomposition of Exchange-Rate Fundamentals:
+A Web-Based Teaching Tool and Learning Evaluation
+================================================================================
+
+Working title
+-------------
+"Can Interactive Attribution Improve Understanding of Macro Drivers of
+Exchange Rates? Evidence from a Browser-Based FX Simulator"
+
+Programme context
+-----------------
+Department of Economics (or International Economics / Applied Macro track)
+Master's thesis, 15,000–25,000 words (adjust to local regulations)
+Empirical focus: education / applied macro communication (not forecasting)
+
+Author placeholder: [Your name]
+Supervisor placeholder: [Supervisor name]
+Academic year: [Year]
+
+================================================================================
+1. ABSTRACT (draft, ~250 words)
+================================================================================
+
+Undergraduate and early graduate courses in open-economy macroeconomics often
+present exchange-rate determinants—interest differentials, inflation, growth,
+external balances, and country risk—as separate channels. Students frequently
+confuse relative levels with marginal effects and struggle to see how multiple
+shocks combine in one quoted rate. This thesis develops and evaluates an
+open-source, browser-based "FX Simulator" that maps country-level macro
+sliders into a transparent linear fundamental rate and separates fundamental
+valuation from a bounded noise layer mimicking short-run spot volatility.
+Contribution bars and ranked natural-language explanations attribute changes
+in the quote to each macro gap.
+
+Using a between-subjects or within-subjects design, I compare learning
+outcomes for students who study the same material with the simulator versus
+a static slide deck or textbook excerpt. Primary outcomes are comprehension
+(quiz scores on sign and magnitude of effects), calibration (which shock
+dominates in preset scenarios), and self-reported confidence. Secondary
+outcomes include time-on-task and qualitative feedback from think-aloud
+sessions. The economic content of the tool is explicitly a teaching toy: fixed
+heuristic weights, not estimated macro coefficients. The contribution is
+therefore pedagogical and communicative—how to teach multi-factor FX
+determination—not a claim of econometric fit to market data.
+
+Keywords: exchange rates, open-economy macro, economic education, interactive
+visualization, attribution, comparative statics
+
+================================================================================
+2. MOTIVATION AND RESEARCH QUESTIONS
+================================================================================
+
+2.1 Motivation
+- Exchange-rate chapters bundle UIP-related intuition, PPP, Taylor-rule
+  narratives, balance-of-payments stories, and risk premia; textbooks rarely
+  let learners manipulate all channels in one screen.
+- Post-COVID and high-inflation periods renewed student interest in "why is
+  the currency moving?" but classroom tools are often static.
+- Policy communication (central banks, treasuries) increasingly uses
+  dashboards; economics education can mirror transparent decomposition.
+
+2.2 Main research question (RQ1)
+Does using an interactive FX simulator with explicit contribution attribution
+improve student understanding of how macro differentials affect a bilateral
+quote, relative to traditional static materials?
+
+2.3 Secondary questions
+RQ2: Which misconceptions (e.g. conflating spot noise with fundamentals,
+      wrong sign on inflation differential) are most reduced?
+RQ3: Do students correctly rank shock importance in preset scenarios (hawkish
+      central bank, stagflation, risk-off) after treatment?
+RQ4: Does separating "fundamental" from "noise" improve distinction between
+      medium-run macro drivers and short-run volatility?
+
+2.4 Scope limits (state clearly in thesis)
+- The simulator's linear structure is a deliberate simplification, not a
+  reduced-form estimate from panel data.
+- Results apply to learning, not to trading or policy forecasting performance.
+
+================================================================================
+3. LITERATURE REVIEW (chapter map)
+================================================================================
+
+3.1 Macro determinants of nominal exchange rates (conceptual)
+- Interest parity and carry intuition; inflation and real rate differentials
+- Growth and productivity narratives; current account / trade balance
+- Country risk, sovereign spreads, and safe-haven flows (qualitative link)
+
+3.2 Teaching open-economy macro
+- Known student difficulties: Marshall-Lerner, UIP puzzles, relative vs
+  absolute changes
+- Prior use of simulations in economics education (PhET-style, classroom
+  experiments, macro sims)
+
+3.3 Visualization, explainability, and learning sciences
+- Decomposition charts and causal attribution in dashboards
+- Cognitive load: when interactivity helps vs overwhelms
+
+3.4 Gap
+Few studies combine (i) multi-factor FX comparative statics, (ii) live
+decomposition of the quote into additive contributions, and (iii) measured
+learning gains in a randomized or quasi-experimental design.
+
+================================================================================
+4. THE FX SIMULATOR — ECONOMIC SPECIFICATION
+================================================================================
+
+4.1 Quote convention
+- A/B = units of B per one unit of A (toy convention, stated in UI)
+
+4.2 Fundamental (structural) rate
+  A/B = 1
+    + 0.4 * Delta(interest rate)
+    - 0.3 * Delta(inflation)
+    + 0.2 * Delta(GDP growth)
+    + 0.1 * Delta(trade balance)
+    - 0.2 * Delta(risk score)
+
+  where Delta(x) = x_A - x_B for each input.
+
+4.3 Spot display
+  spot = fundamental * (1 + noise)
+  noise: bounded random walk (~ +/-4%), not slider-driven
+
+4.4 Pedagogical presets
+- Balanced (fundamental = 1)
+- Hawkish central bank in A
+- Risk-off shock in B
+- Stagflation in A
+- Export boom in A
+
+4.5 Mapping to course content (for thesis narrative)
+| Simulator input      | Typical lecture link                    |
+|----------------------|-----------------------------------------|
+| Interest rate gap    | UIP / policy rate differential          |
+| Inflation gap        | PPP / real appreciation-depreciation  |
+| GDP growth gap       | Balassa-Samuelson / demand stories      |
+| Trade balance gap    | External adjustment, CA shorthand     |
+| Risk score gap       | Risk premium, sovereign stress          |
+
+4.6 Why weights are heuristics
+Discuss alignment with textbook signs without claiming calibration; optional
+sensitivity appendix: re-run learning study with alternative weight sets.
+
+================================================================================
+5. METHODOLOGY
+================================================================================
+
+5.1 Design options (choose one with supervisor)
+A) Randomized controlled trial: treatment = simulator lab; control = PDF/slides
+B) Within-subjects: pre-test, simulator session, post-test
+C) Quasi-experiment across two tutorial groups / universities
+
+5.2 Participants
+- Target: N >= 60–100 for adequate power on quiz scores (power analysis in
+  appendix); economics undergraduates or MSc conversion students
+- Ethics: informed consent, debrief, no real money or investment advice
+
+5.3 Instruments
+- Pre/post multiple-choice and short-answer (sign, magnitude, ranking shocks)
+- Scenario tasks: "Given preset X, which country is stronger and why?"
+- Optional: think-aloud (n=8–12) for qualitative chapter
+- Survey: confidence, usefulness, cognitive load (NASA-TLX short form)
+
+5.4 Procedure (90-minute lab example)
+1. Pre-test (15 min)
+2. Treatment or control material (35 min)
+3. Post-test (15 min)
+4. Questionnaire (10 min)
+5. Debrief (5 min)
+
+5.5 Analysis
+- Primary: difference in post scores (ANCOVA with pre-score) or gain scores
+- Secondary: item-level misconception rates; ranking accuracy on presets
+- Qualitative: thematic coding of think-aloud transcripts
+
+5.6 Threats to validity
+- Hawthorne effect; instructor enthusiasm; prior macro exposure
+- Mitigation: blind grading of open answers; standardized scripts
+
+================================================================================
+6. THESIS STRUCTURE (recommended chapters)
+================================================================================
+
+Chapter 1 — Introduction
+  Problem, RQs, contribution, roadmap
+
+Chapter 2 — Literature review
+  FX determinants in teaching; simulations in econ education; attribution UI
+
+Chapter 3 — Conceptual framework
+  Comparative statics of a linear multi-factor quote; fundamental vs noise
+
+Chapter 4 — The FX Simulator artifact
+  Design goals, UI walkthrough, accessibility, open-source reproducibility
+  (reference: src/fxModel.ts, GUIDE.md)
+
+Chapter 5 — Empirical study
+  Design, participants, instruments, ethics
+
+Chapter 6 — Results
+  Quantitative learning gains; qualitative themes; robustness
+
+Chapter 7 — Discussion
+  Implications for teaching open-economy macro; limits of toy models
+
+Chapter 8 — Conclusion
+  Answer RQs; future work (calibrated weights, multilingual UI, high school)
+
+Appendices
+  A: Quiz items and scoring rubric
+  B: Simulator screenshots and preset tables
+  C: Ethics approval
+  D: Replication: npm install, npm run build, repository URL
+  E: Optional sensitivity on heuristic weights
+
+================================================================================
+7. EXPECTED CONTRIBUTIONS
+================================================================================
+
+1. A reproducible, open teaching artifact for bilateral FX comparative statics
+2. Quantitative evidence on whether interactive attribution improves learning
+3. A typology of student misconceptions in multi-factor FX settings
+4. Practical guidance for instructors (when to use simulator vs algebra)
+
+================================================================================
+8. TIMELINE (12-month example)
+================================================================================
+
+Months 1–2   Literature review, finalize RQs, ethics application
+Months 3–4   Freeze simulator; pilot quiz with 5–10 students
+Months 5–6   Main data collection
+Months 7–8   Analysis; write Chapters 5–6
+Months 9–10  Discussion, introduction, conclusion
+Months 11    Full draft to supervisor
+Month 12     Revision, submission, viva prep
+
+================================================================================
+9. RISKS AND MITIGATIONS
+================================================================================
+
+Risk: "Only a website" — Mitigation: frame as randomized learning study
+Risk: Small N — Mitigation: partner with second instructor; pre-register
+Risk: Weights criticized — Mitigation: label toy model; sensitivity appendix
+Risk: No ethics approval — Mitigation: apply early; anonymous data only
+
+================================================================================
+10. REFERENCES TO SEED (expand in Zotero)
+================================================================================
+
+- Obstfeld & Rogoff, Foundations of International Macroeconomics (determinants)
+- Krugman, Obstfeld & Melitz, International Economics (pedagogy alignment)
+- Journal of Economic Education (methods for econ education RCTs)
+- Recent HCI/visualization papers on explanatory dashboards (if available)
+
+================================================================================
+11. ONE-PARAGRAPH ELEVATOR PITCH (for supervisor meeting)
+================================================================================
+
+I build a browser-based FX teaching simulator that shows how five macro gaps
+add up to a fundamental exchange rate and how random noise moves spot away from
+that fundamental. My thesis tests whether this interactive decomposition helps
+economics students understand multi-factor exchange-rate determination better
+than static slides, using a controlled lab study and pre/post assessments—not
+whether the model forecasts real markets.
+
+================================================================================
+END OF DOCUMENT
+================================================================================

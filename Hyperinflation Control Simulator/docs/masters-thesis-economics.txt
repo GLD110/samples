@@ -1,0 +1,448 @@
+================================================================================
+MASTER'S THESIS — ECONOMICS
+================================================================================
+
+Title:
+  Interactive Policy Simulation of Hyperinflation Dynamics:
+  A Reduced-Form Macro Model for Pedagogy and Policy Intuition
+
+Author:
+  [Candidate name]
+
+Department:
+  Economics
+
+Institution:
+  [University name]
+
+Date:
+  June 2026
+
+================================================================================
+ABSTRACT
+================================================================================
+
+Hyperinflation episodes combine rapid monetary expansion, collapsing institutional
+credibility, and behavioural acceleration of money circulation. This thesis develops
+and documents the Hyperinflation Control Simulator, a client-side computational
+laboratory that translates classical quantity-theoretic intuition and modern
+macro policy trade-offs into an interactive monthly time-step model.
+
+The simulator implements four policy levers—money printing, government spending,
+the policy interest rate, and the tax rate—alongside endogenous state variables
+for money supply, real output, public confidence, and the velocity of money. Monthly
+inflation is specified as money growth minus real output growth plus terms that
+capture confidence erosion and velocity feedback. Confidence itself responds to
+inflation surprises and interest-rate credibility. The model is deliberately
+reduced-form: it prioritises transparent feedback loops over empirical calibration.
+
+Three preset scenarios (stable economy, crisis economy, hyperinflation spiral)
+illustrate how parameter constellations map to qualitatively different dynamic paths.
+The thesis argues that such tools complement formal theory by making fiscal–monetary
+interaction and positive feedback visible to students and policymakers, while
+clearly delineating limits: the simulator is not a forecasting engine and does not
+replace econometric identification.
+
+Keywords: hyperinflation, quantity theory, fiscal policy, monetary policy, simulation,
+credibility, velocity of money, interactive macroeconomics.
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+1.  Introduction
+2.  Literature and Conceptual Background
+3.  Theoretical Framework
+4.  Model Specification
+5.  Implementation and User Interface
+6.  Scenario Analysis
+7.  Pedagogical Value and Limitations
+8.  Conclusion
+9.  References
+Appendix A: Equation Reference (as implemented)
+Appendix B: Default and Preset Parameters
+
+================================================================================
+1. INTRODUCTION
+================================================================================
+
+1.1 Motivation
+
+Episodes of very high inflation—commonly labelled hyperinflation when monthly rates
+exceed roughly 50 percent in the academic convention, though operational definitions
+vary—remain among the most destructive macroeconomic crises. They destroy real
+balances, distort relative prices, undermine tax collection, and often coincide with
+political instability. Yet the mechanisms that generate and sustain hyperinflation
+are teachable: excessive monetisation of fiscal deficits, loss of confidence in the
+currency unit, and strategic behaviour that accelerates spending before money loses
+value.
+
+Traditional instruction relies on static diagrams (AD–AS shifts, Phillips curves) or
+historical case studies (Weimar Germany, Zimbabwe, Venezuela). Both are indispensable
+but leave the temporal structure of feedback implicit. A discrete-time simulation
+allows learners to manipulate levers and observe compounding month by month.
+
+1.2 Research Question
+
+This thesis asks: Can a transparent, reduced-form monthly macro model, implemented
+as an interactive web application, faithfully convey the core economic mechanisms
+of inflation control and hyperinflation risk without claiming empirical precision?
+
+1.3 Contribution
+
+The contribution is threefold:
+
+  (a) A documented specification linking policy sliders to inflation, output, and
+      confidence dynamics, grounded in quantity-theoretic decomposition.
+
+  (b) An open implementation (React, TypeScript, Zustand) that exposes all
+      coefficients for classroom experimentation.
+
+  (c) A critical assessment of what such pedagogy can and cannot establish about
+      real economies.
+
+1.4 Scope
+
+The analysis is positive–pedagogical, not econometric. No country data are loaded;
+coefficients are chosen for qualitative plausibility and visual clarity.
+
+================================================================================
+2. LITERATURE AND CONCEPTUAL BACKGROUND
+================================================================================
+
+2.1 The Quantity Theory and Its Limits
+
+The identity MV = PY, with M money stock, V velocity, P price level, and Y real
+output, underpins much inflation discourse. In growth-rate form, approximate
+inflation equals money growth plus velocity growth minus output growth, when
+definitions are held consistent. Friedman’s dictum that inflation is “always and
+everywhere a monetary phenomenon” emphasises sustained excess money creation;
+sceptics note reverse causation, financial innovation, and open-economy channels.
+
+The simulator adopts the growth-rate decomposition as its organising principle but
+augments it with a confidence–velocity block absent from naive textbook versions.
+
+2.2 Fiscal Theory and Monetisation
+
+When governments spend beyond politically feasible taxation and credible debt
+issuance, central banks may accommodate deficits through base money creation. The
+fiscal theory of the price level (FTPL) and classic “unpleasant monetarist
+arithmetic” (Sargent and Wallace, 1981) stress that unsustainable fiscal paths can
+force inflation even if monetary authorities attempt restraint in the short run.
+Government spending in the simulator raises real output growth directly—a reduced-form
+stand-in for demand stimulus—while high money printing expands nominal balances.
+
+2.3 Credibility and Expectations
+
+Kydland and Prescott’s time-inconsistency problem and Barro–Gordon inflation bias
+highlight that announced disinflation fails without credible commitment. In crisis
+episodes, “confidence” collapses: households and firms shorten money-holding periods,
+raising V. The simulator’s confidence variable (0–99 scale) formalises this as a
+state that both enters the inflation equation and is eroded by high realised inflation,
+while interest rates partially restore it.
+
+2.4 Hyperinflation Case Studies
+
+Cagan (1956) modelled money demand during hyperinflations as sensitive to expected
+inflation, generating unstable dynamics when monetisation persists. Hanke and
+Krus (2012) catalogue historical episodes, emphasising fiscal roots. These histories
+inform the “spiral” preset: aggressive printing, high spending, low rates, low initial
+confidence.
+
+2.5 Computational Economics and Teaching
+
+Agent-based models and DSGE simulators serve researchers; lightweight browser tools
+serve classrooms. The present project occupies the latter niche, comparable in spirit
+to classroom Phillips-curve simulators but focused on high-inflation regimes.
+
+================================================================================
+3. THEORETICAL FRAMEWORK
+================================================================================
+
+3.1 Structure
+
+The economy is represented at monthly frequency with:
+
+  Policy inputs (chosen by user):
+    π_m   money printing rate (% per month)
+    G     government spending index (15–100)
+    i     policy interest rate (%)
+    τ     tax rate (%)
+
+  State variables:
+    M     money supply index (baseline 100)
+    Y     real output index (baseline 100)
+    C     confidence index (8–99)
+    V     velocity (derived)
+    κ     currency purchasing-power index (baseline 100)
+
+  Outcome:
+    π     monthly inflation rate (%)
+
+3.2 Real Output Growth Channel
+
+Real output growth combines a small autonomous trend with fiscal stimulus and
+drag from taxation and high interest rates:
+
+  g_Y = 0.2 + 0.55·(G/100) − 0.5·(τ/100) − 0.35·(i/100)    [% per month]
+
+Then g_Y is clamped to [−1.2, 4] to prevent explosive or deeply negative growth
+from slider extremes. This block captures the idea that spending supports activity
+while taxes and tight money cool it—without modelling a full IS curve or government
+budget constraint explicitly.
+
+3.3 Velocity and the “Hot Potato”
+
+When confidence is low, agents reduce desired real money balances:
+
+  V = 1 + ((100 − C) / 100) · 2.4
+
+At C = 100, V = 1; at C = 8, V approaches 3.2. Higher velocity, holding M fixed,
+raises nominal spending pressure—analogous to faster turnover of a depreciating
+asset.
+
+3.4 Inflation Equation
+
+Define a confidence–velocity factor:
+
+  Φ = (1 − C/100) · 3.2 + max(0, V − 1) · 2.4
+
+Monthly inflation is:
+
+  π = max(−2,  π_m − g_Y + Φ)    [% per month]
+
+Interpretation: direct money growth (π_m) pushes prices up; real output growth
+(g_Y) absorbs some nominal expansion; low confidence and high velocity add
+inflationary pressure beyond simple monetarist arithmetic. The floor at −2% allows
+mild deflationary months under tight policy but prevents unrealistic large negative
+inflation from dominating the UI.
+
+3.5 Confidence Dynamics
+
+Confidence updates each month:
+
+  • Erosion when π > 1.8%: subtract 0.55 · max(0, π − 1.8)
+  • Credibility gain from interest rates: add 0.12 · i
+  • Recovery when π < 2.5%: add 0.35 + 0.04 · (68 − C) toward a neutral band
+  • Clamp C to [8, 99]
+
+This creates a two-way feedback: high inflation lowers confidence, which raises Φ
+and thus future inflation—mimicking spiral risk without solving rational expectations
+explicitly.
+
+3.6 Stock Accumulation
+
+  M_{t+1} = M_t · (1 + π_m/100)
+  Y_{t+1} = Y_t · (1 + g_Y/100)
+  κ_{t+1} = κ_t · 100/(100 + max(0, π))    [purchasing power erosion]
+
+The currency index κ is not an exchange rate; it tracks domestic purchasing power
+relative to baseline 100.
+
+================================================================================
+4. MODEL SPECIFICATION
+================================================================================
+
+4.1 Warning Thresholds
+
+The user interface classifies monthly inflation as:
+
+  Stable:          π < 5%
+  Unstable:        5% ≤ π < 25%
+  Hyperinflation:  π ≥ 25%
+
+These thresholds are pedagogical markers aligned with the simulator’s scale (monthly
+percent), not a claim about international statistical definitions.
+
+4.2 Currency Health Metric
+
+A composite “currency health” meter (0–100) combines confidence and inflation:
+
+  health = clamp(0.85·C − 1.8·min(55, max(0, π)) + 12,  0, 100)
+
+High inflation penalises health even if confidence has not yet fully collapsed.
+
+4.3 Annualisation Display
+
+The UI shows “annualized est.” as π × 12 (simple multiplication, not compounding).
+This is a rough heuristic for readers accustomed to annual CPI, not a rigorous
+annual rate.
+
+4.4 Time Discretisation
+
+One real-time second equals one simulated month while the simulation runs. History
+retains up to 72 months. Users may pause, reset, or load presets without server
+persistence.
+
+================================================================================
+5. IMPLEMENTATION AND USER INTERFACE
+================================================================================
+
+5.1 Software Architecture
+
+The application is built with React and TypeScript, bundled by Vite. Global state
+resides in a Zustand store (simulationStore.ts). The central function computeStep()
+encapsulates all economic updating; tick() advances the clock and appends chart
+points. Recharts renders inflation, money supply, and currency index series.
+
+5.2 Policy Panel
+
+Sliders bound approximately:
+
+  Money printing:     0–25% / month
+  Government spending: 15–100
+  Interest rate:      0–18%
+  Tax rate:           5–45%
+
+Changes apply on the next tick after pause or during continuous run.
+
+5.3 Separation of Concerns
+
+By isolating economics in computeStep(), instructors may alter coefficients or add
+equations without restructuring UI components—a maintainability choice that supports
+thesis replication exercises.
+
+================================================================================
+6. SCENARIO ANALYSIS
+================================================================================
+
+6.1 Default Initial State
+
+  π_m = 1.2%, G = 48, i = 4.5%, τ = 22%
+  M = Y = κ = 100, C = 72
+
+Under default settings, moderate printing and mid-range fiscal policy typically
+produce inflation in the unstable band if confidence erodes, or stabilise if rates
+support credibility—outcomes depend on path and duration.
+
+6.2 Preset: Stable Economy
+
+  π_m = 0.9%, G = 42, i = 5%, τ = 24%, C₀ = 75
+
+Lower monetisation, balanced spending, higher taxes, and stronger initial confidence
+favour monthly inflation below 5% and gradual recovery of confidence when shocks
+are absent.
+
+6.3 Preset: Crisis Economy
+
+  π_m = 4.5%, G = 82, i = 1.5%, τ = 14%, C₀ = 55
+
+Loose money, high spending, low rates, and weak confidence push π into unstable or
+hyperinflation bands within several months. Velocity rises as confidence falls,
+amplifying Φ.
+
+6.4 Preset: Hyperinflation Spiral
+
+  π_m = 14%, G = 92, i = 0.5%, τ = 8%, C₀ = 38
+
+This constellation models aggressive deficit monetisation and fiscal expansion with
+minimal monetary restraint. Money supply grows at 14% per month; real growth may be
+positive from spending but cannot offset printing and confidence effects. Currency
+index κ collapses rapidly; warnings persist in hyperinflation state.
+
+6.5 Policy Experiments (Qualitative)
+
+Students can test:
+
+  (1) Raising i to stabilise C and reduce Φ—at the cost of lower g_Y.
+  (2) Cutting π_m with lagged effect on M growth.
+  (3) Fiscal tightening via higher τ or lower G to cool demand.
+  (4) Interaction effects: low rates during high printing accelerate spirals.
+
+Formal comparative statics are limited because the system is nonlinear and path-dependent.
+
+================================================================================
+7. PEDAGOGICAL VALUE AND LIMITATIONS
+================================================================================
+
+7.1 Strengths
+
+  • Makes MV = PY logic operational month by month.
+  • Shows positive feedback between inflation and confidence.
+  • Links fiscal and monetary instruments in one dashboard.
+  • Immediate visual feedback lowers barrier for non-specialists.
+
+7.2 Limitations
+
+  • No microfoundations, optimisation, or expectations equilibrium.
+  • No open economy, exchange rates, or dollarisation.
+  • No government budget constraint or debt stock.
+  • Coefficients are not estimated; calibration is illustrative.
+  • Monthly hyperinflation threshold (25%) is a UI convention, not Cagan’s 50%.
+
+7.3 Relation to Empirical Work
+
+Forecasting real CPI requires data, identification, and structural or time-series
+models. This simulator should never be cited as evidence for a specific country’s
+trajectory.
+
+================================================================================
+8. CONCLUSION
+================================================================================
+
+The Hyperinflation Control Simulator distils decades of monetary and fiscal theory
+into a compact feedback system suitable for interactive learning. Its inflation
+equation embodies money growth minus real growth plus confidence-driven velocity
+pressure; its confidence dynamics capture credibility loss and partial restoration
+through interest rates.
+
+For economics master’s training, the project demonstrates how to translate theory
+into reproducible code, how to communicate limits honestly, and how simulation can
+complement—not replace—rigorous empirical macroeconomics. Future extensions might
+add explicit deficit financing, seigniorage, wage indexation, or heterogeneous
+expectations; each would move the model toward research-grade complexity at the
+cost of transparency.
+
+================================================================================
+9. REFERENCES
+================================================================================
+
+Barro, R. J., & Gordon, D. B. (1983). A positive theory of monetary policy in a
+  natural rate model. Journal of Political Economy, 91(4), 589–610.
+
+Cagan, P. (1956). The monetary dynamics of hyperinflation. In M. Friedman (Ed.),
+  Studies in the Quantity Theory of Money (pp. 25–117). University of Chicago Press.
+
+Friedman, M. (1963). Inflation: Causes and Consequences. Asia Publishing House.
+
+Hanke, S. H., & Krus, N. (2012). World hyperinflations. Cato Working Paper.
+
+Kydland, F. E., & Prescott, E. C. (1977). Rules rather than discretion: The
+  inconsistency of optimal plans. Journal of Political Economy, 85(3), 473–491.
+
+Sargent, T. J., & Wallace, N. (1981). Some unpleasant monetarist arithmetic.
+  Federal Reserve Bank of Minneapolis Quarterly Review, 5(3), 1–17.
+
+Sims, C. A. (1994). A simple model for study of the determination of the price
+  level and the interaction of monetary and fiscal policy. Economic Theory, 4(3),
+  381–399.
+
+================================================================================
+APPENDIX A: EQUATION REFERENCE (AS IMPLEMENTED)
+================================================================================
+
+g_Y     = clamp(0.2 + 0.55(G/100) − 0.5(τ/100) − 0.35(i/100), −1.2, 4)
+V       = 1 + ((100 − C)/100) · 2.4
+Φ       = (1 − C/100) · 3.2 + max(0, V − 1) · 2.4
+π       = max(−2, π_m − g_Y + Φ)
+C'      = clamp(C − 0.55·max(0,π−1.8) + 0.12·i + [recovery if π<2.5], 8, 99)
+M'      = M(1 + π_m/100)
+Y'      = Y(1 + g_Y/100)
+κ'      = κ · 100/(100 + max(0, π))
+
+Source: src/store/simulationStore.ts, function computeStep().
+
+================================================================================
+APPENDIX B: DEFAULT AND PRESET PARAMETERS
+================================================================================
+
+DEFAULT (reset):
+  π_m=1.2, G=48, i=4.5, τ=22, C₀=72, M₀=Y₀=κ₀=100
+
+PRESET stable:   π_m=0.9, G=42, i=5,   τ=24, C₀=75
+PRESET crisis:   π_m=4.5, G=82, i=1.5, τ=14, C₀=55
+PRESET spiral:   π_m=14,  G=92, i=0.5, τ=8,  C₀=38
+
+================================================================================
+END OF DOCUMENT
+================================================================================

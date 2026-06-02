@@ -1,0 +1,287 @@
+================================================================================
+MASTER'S THESIS OUTLINE — FINANCE
+Fundamental vs Spot: Teaching FX Attribution with an Interactive Simulator
+================================================================================
+
+Working title
+-------------
+"Separating Fundamental Drivers from Market Noise: An Interactive Tool and
+User Study for Introductory International Finance Education"
+
+Programme context
+-----------------
+Department of Finance / MSc Finance / Financial Economics track
+Master's thesis, 12,000–20,000 words (adjust to local regulations)
+Focus: financial markets education, FX quoting literacy, behavioral clarity
+(not alpha generation or proprietary trading systems)
+
+Author placeholder: [Your name]
+Supervisor placeholder: [Supervisor name]
+Academic year: [Year]
+
+================================================================================
+1. ABSTRACT (draft, ~250 words)
+================================================================================
+
+International finance students must interpret bilateral FX quotes, link macro
+and risk inputs to directional moves, and distinguish durable re-pricing from
+short-term volatility. Yet many classroom tools either show static formulas or
+live charts without attributing why the rate changed. This thesis presents the
+FX Simulator, a client-side web application that computes a transparent
+fundamental rate from five country-level inputs (rates, inflation, growth,
+trade, risk) and overlays a bounded stochastic noise factor to mimic spot
+deviation from fundamentals. The interface exposes contribution bars, ranked
+"why did it change?" narratives, and scenario presets (hawkish policy, risk-off,
+stagflation, export boom).
+
+I evaluate whether this design improves financial literacy outcomes: correct
+interpretation of A/B quoting, sign of P&L-relevant moves, ranking of dominant
+drivers, and ability to explain the gap between fundamental and displayed spot.
+A lab-based study compares simulator users against a control group using
+traditional lecture notes plus static Bloomberg-style screenshots. The thesis
+does not claim the heuristic linear model is empirically calibrated; instead it
+contributes to finance pedagogy and explainable presentation of multi-factor
+FX—a skill relevant to treasury, corporate FX hedging education, and retail
+investor protection narratives.
+
+Keywords: foreign exchange, financial education, market microstructure intuition,
+attribution, fundamental vs spot, interactive learning
+
+================================================================================
+2. MOTIVATION AND RESEARCH QUESTIONS
+================================================================================
+
+2.1 Motivation
+- FX is a core MSc Finance topic but students confuse quote conventions (direct/
+  indirect), percentage changes, and macro news interpretation.
+- Practitioners use dashboards; graduates often lack training in decomposing moves.
+- Regulators and industry bodies stress understandable client communication;
+  attribution UIs are understudied in finance curricula.
+
+2.2 Main research question (RQ1)
+After a structured introduction to bilateral FX, do students using the FX Simulator
+score higher on tasks requiring (i) quote interpretation, (ii) driver attribution,
+and (iii) fundamental–spot separation than students using static materials?
+
+2.3 Secondary questions
+RQ2: Does exposure to contribution bars reduce errors in identifying the largest
+      driver in multi-shock presets?
+RQ3: Does explicit "noise" visualization reduce the belief that all spot moves
+      are explained by the five sliders?
+RQ4: Do students report higher confidence in explaining FX moves to a non-expert
+      (proxy for workplace communication)?
+
+2.4 Non-goals (explicit)
+- No claim of profitable trading strategy
+- No high-frequency or order-book microstructure model
+- No replacement for econometric exchange-rate forecasting literature
+
+================================================================================
+3. LITERATURE REVIEW (chapter map)
+================================================================================
+
+3.1 International parity conditions and FX determination (finance lens)
+- Covered interest parity, carry trades (intuition)
+- Inflation and nominal depreciation links
+- Risk premia, sovereign CDS, safe-haven flows (qualitative)
+
+3.2 Corporate and market practitioner perspectives
+- How treasurers and analysts discuss "drivers" of a currency pair
+- Hedging literacy: exposure, not speculation
+
+3.3 Financial education and investor protection
+- Misconceptions in levered FX products (CFD/retail context, if relevant)
+- Effectiveness of interactive vs passive learning in finance courses
+
+3.4 FinTech, dashboards, and explainable finance
+- Attribution in portfolio risk systems; parallels to FX decomposition UI
+- Cognitive aspects of real-time number animation and noise display
+
+3.5 Gap
+Limited experimental evidence on whether fundamental–spot split plus ranked
+attribution improves MSc Finance students' FX explanation skills.
+
+================================================================================
+4. THE FX SIMULATOR — FINANCE-ORIENTED DESCRIPTION
+================================================================================
+
+4.1 Instrument definition
+- Pair: A/B
+- Fundamental F = 1 + sum_i w_i * (input_i,A - input_i,B)
+- Spot display S = F * (1 + epsilon), epsilon from bounded random walk
+
+4.2 Weights (heuristic, for classroom comparative statics)
+  w_rate = +0.4, w_inflation = -0.3, w_gdp = +0.2,
+  w_trade = +0.1, w_risk = -0.2
+
+4.3 UI features relevant to finance thesis
+- Hero: animated spot, arrow vs previous tick, fundamental line, noise %
+- Presets as stress scenarios for classroom discussion
+- Contribution panel: additive decomposition relative to parity anchor "1"
+- Explanation panel: sorted by impact magnitude
+
+4.4 Link to finance learning outcomes
+| Learning outcome              | Simulator feature              |
+|-------------------------------|----------------------------------|
+| Read a bilateral quote        | A/B headline, 4 decimal places   |
+| Direction of appreciation     | Stronger/weaker country highlight|
+| Multi-factor attribution      | Bars + ranked explanations       |
+| Volatility vs fundamentals    | Noise timer vs slider-only F     |
+| Scenario analysis             | Preset buttons                   |
+
+4.5 Optional extension chapter (if time permits)
+- Compare heuristic signs to one-year rolling correlations on major pair
+  (illustrative only; not main contribution)
+- Discuss why full finance models (Taylor rules, BEER, etc.) are out of scope
+
+================================================================================
+5. METHODOLOGY
+================================================================================
+
+5.1 Study design
+- Preferred: randomized control in MSc International Finance tutorial
+- Alternative: two-cohort quasi-experiment (Year t vs t+1 with new tool)
+
+5.2 Sample
+- Finance MSc or senior BFin students with basic macro prerequisite
+- Target N: 50–120; justify with power analysis on quiz proportion correct
+
+5.3 Assessment battery (finance-tailored)
+Section A — Quote mechanics
+  - Convert move in A/B to % appreciation of A vs B
+  - Identify base/quote in verbal scenarios
+
+Section B — Attribution
+  - Given slider positions, predict sign of change in A/B
+  - Rank three largest contributions in a preset
+
+Section C — Fundamental vs spot
+  - Explain why spot differs from fundamental with noise only
+  - True/false: "Moving inflation slider always explains today's tick"
+
+Section D — Communication (short answer)
+  - Write 150 words explaining a preset to a corporate treasurer
+
+5.4 Treatment protocol (60–90 min)
+- Control: PDF + static chart images + worked examples
+- Treatment: guided tour of simulator + free exploration + preset tasks
+
+5.5 Data and ethics
+- Store anonymized scores; no personal trading data
+- Clear disclaimer: educational toy, not investment advice
+
+5.6 Econometrics of learning (simple)
+- OLS: PostScore = alpha + beta*Treatment + gamma*PreScore + controls
+- Logit for binary misconception indicators
+- Report effect sizes (Cohen's d) for finance education audience
+
+================================================================================
+6. THESIS STRUCTURE (recommended chapters)
+================================================================================
+
+Chapter 1 — Introduction
+  Industry and classroom problem; RQs; contributions; structure
+
+Chapter 2 — Literature review
+  FX in finance programmes; literacy studies; dashboards and attribution
+
+Chapter 3 — Conceptual framework
+  Fundamental vs spot; multi-factor linear attribution as teaching abstraction
+  Relationship to parity conditions (conceptual mapping, not estimation)
+
+Chapter 4 — System design and implementation
+  Architecture (React, client-only), model layer, UX for finance users
+  Reproducibility and deployment (GUIDE.md, build instructions)
+
+Chapter 5 — Experimental design and data
+  Participants, materials, procedures, ethics
+
+Chapter 6 — Results
+  Treatment effects; item analysis; qualitative treasurer memos (sample)
+
+Chapter 7 — Implications for finance education and practice
+  Treasury training, retail disclosure, limits of heuristic models
+
+Chapter 8 — Conclusion and future research
+  Calibrated fundamentals, additional asset classes, professional workshops
+
+Appendices
+  A: Assessment items and marking scheme
+  B: Preset parameter tables
+  C: Screenshots and user flow
+  D: Code repository and version hash
+  E: Optional illustrative data exercise (major pair)
+
+================================================================================
+7. EXPECTED CONTRIBUTIONS
+================================================================================
+
+1. Finance-pedagogy evidence on interactive FX attribution tools
+2. Documented open artifact suitable for MSc lab sessions
+3. Misconception taxonomy (quote direction, noise vs fundamental, weight signs)
+4. Recommendations for integrating fundamental–spot narratives in IF courses
+
+================================================================================
+8. DIFFERENCE FROM ECONOMICS VERSION OF SAME PROJECT
+================================================================================
+
+Economics thesis emphasis:
+  - Open-economy macro theory linkage, comparative statics pedagogy
+  - Broader macro policy communication
+
+Finance thesis emphasis (this document):
+  - Quote literacy, practitioner explanation, corporate/treasury framing
+  - Market vs fundamental narrative; financial education outcomes
+  - Closer to MSc Finance / International Finance syllabi
+
+Both can use the same simulator; research design should not duplicate if two
+theses run in parallel—coordinate samples and instruments.
+
+================================================================================
+9. TIMELINE (10-month intensive example)
+================================================================================
+
+Month 1     Proposal, ethics, literature
+Month 2     Finalize assessment; pilot n=10
+Month 3     Main study data collection
+Month 4     Analysis
+Months 5–6  Chapters 4–6 draft
+Month 7     Chapters 1–3, 7–8
+Month 8     Supervisor revisions
+Month 9     External review / formatting
+Month 10    Submission and defense prep
+
+================================================================================
+10. SUPERVISOR DISCUSSION CHECKLIST
+================================================================================
+
+[ ] Confirm human-subjects ethics path
+[ ] Approve heuristic model disclaimer in consent form
+[ ] Choose RCT vs quasi-experimental design
+[ ] Agree minimum sample size and power calculation
+[ ] Decide if optional empirical illustration (real FX data) is in scope
+[ ] Align thesis length and citation style with department rules
+
+================================================================================
+11. SEED REFERENCES (expand)
+================================================================================
+
+- Eun & Resnick, International Financial Management (FX chapters)
+- Shapiro, Multinational Financial Management (if corporate angle)
+- Madura, International Financial Management (education alignment)
+- Journal of Financial Education / Financial Services Review (pedagogy methods)
+- BIS/IOSCO material on FX disclosure (policy context, if applicable)
+
+================================================================================
+12. ONE-PARAGRAPH ELEVATOR PITCH (for supervisor meeting)
+================================================================================
+
+I study whether an interactive FX simulator—showing how five country inputs build
+a fundamental rate and how noise moves spot—helps finance students interpret
+quotes, attribute moves, and explain fundamentals versus volatility better than
+static teaching materials, using a controlled classroom experiment and
+finance-specific assessments, without claiming the toy model forecasts markets.
+
+================================================================================
+END OF DOCUMENT
+================================================================================

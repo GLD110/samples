@@ -1,0 +1,543 @@
+================================================================================
+                    MASTER'S THESIS — ECONOMICS
+================================================================================
+
+Title:
+  Feedback Loops in Open Economies: A Discrete-Time Simulation of Currency
+  Stability, Inflation, and Dollarization Dynamics
+
+Author:
+  [Author Name]
+
+Institution:
+  [University / Department of Economics]
+
+Degree:
+  Master of Science in Economics (M.Sc.)
+
+Supervisor:
+  [Supervisor Name]
+
+Date:
+  June 2026
+
+================================================================================
+                              ABSTRACT
+================================================================================
+
+Emerging and developing economies frequently face intertwined pressures on
+exchange rates, inflation, and currency usage. Weak external balances, import
+dependence, loss of confidence in local money, and aggressive fiscal
+monetization can reinforce one another in destabilizing feedback loops. This
+thesis develops and analyzes a stylized discrete-time macroeconomic simulation
+—the Currency Stability Simulator—designed to make those causal chains
+visible for teaching and policy intuition.
+
+The model represents a small open economy in monthly steps. Structural
+parameters capture import dependency, productive capacity (GDP strength),
+foreign-exchange reserve buffers, monetary policy (money printing and interest
+rates), official FX intervention, public trust in the local currency, USD
+preference, and panic sensitivity. State variables track inflation, the
+exchange rate (local units per US dollar), dollarization (USD vs. local usage
+shares), an import cost index, and a composite stability score. External shocks
+(oil price spikes, war/import disruption, IMF bailouts) enter as temporary
+modifiers.
+
+Each simulation tick applies a fixed causal sequence: FX pressure is computed
+from structural pulls and policy buffers; the exchange rate depreciates when
+pressure exceeds interest-rate and reserve support; depreciation passes through
+to inflation via import costs; inflation feeds back into FX pressure and
+dollarization; and stability is re-scored. The engine distinguishes four system
+statuses—Stable, Weak, Crisis, and Collapse—using threshold rules on inflation,
+stability, FX pressure, and the exchange-rate level.
+
+Scenario experiments with five presets (Stable Economy, Emerging Market Stress,
+Import Crisis, Hyperinflation Spiral, Peg Collapse) illustrate how identical
+policy instruments produce divergent paths depending on initial structure and
+expectations. The thesis argues that interactive simulation complements
+analytical open-economy models by emphasizing path dependence, non-linear
+amplification through panic, and the limits of intervention without reserves.
+
+The model is explicitly pedagogical: coefficients are calibrated for clarity
+of feedback, not econometric fit to any single country. Nevertheless, the
+framework maps cleanly onto standard macroeconomic concepts—pass-through,
+monetary accommodation, currency substitution, and balance-of-payments stress—
+and provides a reproducible laboratory for comparative statics and shock
+analysis.
+
+Keywords: open-economy macroeconomics, exchange-rate pass-through, inflation
+dynamics, dollarization, currency crisis, computational simulation, policy
+credibility
+
+================================================================================
+                         TABLE OF CONTENTS
+================================================================================
+
+1.  Introduction
+2.  Literature Review
+3.  Theoretical Framework
+4.  Model Specification
+5.  Simulation Methodology
+6.  Scenario Analysis and Results
+7.  Policy Implications
+8.  Limitations and Extensions
+9.  Conclusion
+References
+Appendix A: Variable and Parameter Definitions
+Appendix B: Preset Parameter Values
+
+================================================================================
+                          1. INTRODUCTION
+================================================================================
+
+1.1 Motivation
+
+Currency instability is rarely a single-equation problem. Depreciation raises
+import prices; higher prices erode real wages and confidence; households and
+firms shift toward foreign currency; dollarization increases effective demand
+for dollars and weakens monetary transmission in local currency; authorities
+face a trilemma between defending the exchange rate, controlling inflation, and
+preserving growth. Historical episodes—from Latin American hyperinflations to
+recent emerging-market stress—show that these channels can interact faster
+than linear spreadsheet models suggest.
+
+Traditional undergraduate and graduate macroeconomics often treats exchange
+rates, inflation, and money demand in separate modules. Students may master
+each block in isolation yet struggle to predict how a reserve drain, an oil
+shock, and a credibility loss compound over twelve to twenty-four months. This
+thesis addresses that gap with a transparent, open-source simulation whose
+equations are small enough to read in one sitting but rich enough to generate
+crisis dynamics.
+
+1.2 Research Questions
+
+  RQ1: Which structural features most strongly determine whether an economy
+       remains Stable or transitions to Crisis or Collapse under sustained
+       stress?
+
+  RQ2: How do trust, panic sensitivity, and USD preference alter the speed and
+       severity of inflation–FX feedback loops?
+
+  RQ3: Under what conditions can higher interest rates and FX intervention
+       stabilize the exchange rate without triggering an inflation spiral or
+       accelerating dollarization?
+
+  RQ4: How do temporary external shocks (commodity prices, trade disruption,
+       official financing) shift the trajectory relative to baseline parameters?
+
+1.3 Contribution
+
+The contribution is threefold:
+
+  (1) A documented discrete-time model linking FX pressure, pass-through
+      inflation, currency substitution, and a stability index in one engine.
+
+  (2) A set of reproducible scenario presets and shock modules that encode
+      common emerging-market narratives.
+
+  (3) An pedagogical interpretation connecting simulation coefficients to
+      established open-economy theory (Mundell–Fleming intuition, pass-through
+      literature, currency-substitution models).
+
+1.4 Scope and Disclaimer
+
+The Currency Stability Simulator is not a forecasting tool. It does not
+estimate parameters from national accounts or market data. All results are
+illustrative. The thesis focuses on comparative dynamics and teaching value.
+
+================================================================================
+                       2. LITERATURE REVIEW
+================================================================================
+
+2.1 Exchange-Rate Pass-Through and Import Prices
+
+A large empirical literature documents incomplete and time-varying pass-through
+from exchange rates to consumer prices (Goldberg and Knetter, 1997; Burstein
+and Gopinath, 2014). Import-dependent economies exhibit stronger near-term
+pass-through, especially when domestic competition is weak or mark-ups adjust
+slowly. The simulation encodes this via import dependency scaling the
+inflation response to monthly depreciation, moderated by trust in local
+currency (a reduced-form proxy for pricing-to-market and indexation).
+
+2.2 Currency Substitution and Dollarization
+
+Currency substitution models (Calvo and Vegh, 1992; Guidotti and Rodriguez,
+1992) emphasize that when domestic money fails as a store of value, agents
+shift to foreign currency, weakening seigniorage and monetary control. The
+simulator's USD usage variable aggregates transaction and portfolio
+substitution into a single share, driven by inflation, trust gaps, USD
+preference, FX pressure, and partially offset by interest rates.
+
+2.3 Balance-of-Payments Crises and Reserve Exhaustion
+
+First- and second-generation currency crisis models (Krugman, 1979; Obstfeld,
+1994) highlight inconsistent policy mixes and self-fulfilling attacks. The
+peg-collapse preset mirrors a country defending an overvalued rate with
+intervention while reserves erode—a stylized second-generation narrative. FX
+intervention effectiveness in the model is scaled by effective reserve strength,
+capturing the idea that promises to defend a peg without ammunition lack
+credibility.
+
+2.4 Inflation Spirals and Fiscal Dominance
+
+Sargent and Wallace (1981) and modern fiscal theory of the price level remind
+us that monetization of deficits can destabilize inflation expectations. The
+money-printing parameter represents excess liquidity creation; combined with
+panic-driven spiral terms tied to existing inflation, the model can generate
+accelerating paths resembling fiscal dominance without explicit government
+budget accounting.
+
+2.5 Agent-Based and System-Dynamics Approaches
+
+Beyond DSGE estimation, system-dynamics and agent-based models (Epstein, 2006;
+Farmer and Foley, 2009) prioritize feedback visibility. This thesis aligns
+with that tradition: low dimensionality, explicit causal ordering, and UI-
+driven experimentation over maximum realism.
+
+================================================================================
+                      3. THEORETICAL FRAMEWORK
+================================================================================
+
+3.1 Conceptual Causal Graph
+
+The engine implements the following monthly causal chain:
+
+  Structural parameters + shocks
+           |
+           v
+      FX pressure (0–100 index)
+           |
+           v
+   Exchange rate (depreciation)
+           |
+           +----> Import cost index
+           |
+           v
+      Inflation (annualized display)
+           |
+           +----> FX pressure (feedback)
+           |
+           v
+   USD vs. local usage (dollarization)
+           |
+           v
+      Stability score + system status
+
+3.2 FX Pressure as a Reduced-Form Balance-of-Payments Stress Index
+
+FX pressure aggregates "pull" forces—import dependency, current inflation,
+USD preference—amplified by panic sensitivity. It subtracts "buffer" forces:
+FX intervention (interacting with reserves), GDP strength, reserve levels, and
+trust. The result is clamped to [0, 100]. Higher pressure maps to stronger
+monthly depreciation unless offset by interest-rate support and reserve-backed
+stabilization.
+
+Economically, pressure stands in for net external demand for foreign currency
+relative to policy capacity to supply or absorb it.
+
+3.3 Inflation Block
+
+Monthly inflation accumulates from:
+
+  - Monetary push (money printing rate)
+  - Exchange-rate pass-through (imports × depreciation)
+  - Interest-rate disinflation
+  - Panic spiral (function of existing inflation and panic sensitivity)
+  - Shock bonuses (oil, war, IMF)
+
+Displayed inflation blends toward an annualized equivalent derived from monthly
+flow, smoothing short spikes while preserving trend feedback into FX pressure.
+
+3.4 Dollarization Block
+
+USD usage rises with inflation stress, low trust, high USD preference, and FX
+pressure; it falls slightly with higher local interest rates and trust. Local
+usage is the residual to 100%. This is a reduced-form law of motion, not a
+micro-founded portfolio choice model.
+
+3.5 Stability Score and Regime Classification
+
+Stability penalizes high inflation, high USD share, and high FX pressure; it
+rewards GDP strength, trust, and reserves. Threshold rules classify outcomes:
+
+  Stable   — moderate inflation, adequate stability, moderate pressure
+  Weak     — elevated inflation and/or pressure, or slipping stability
+  Crisis   — low stability, high inflation, and/or very high pressure
+  Collapse — extreme inflation, very low stability, or exchange rate > 8× initial
+
+================================================================================
+                       4. MODEL SPECIFICATION
+================================================================================
+
+4.1 State Variables (updated each tick)
+
+  month              — elapsed simulation months
+  inflationPct       — approximate annualized inflation (%)
+  exchangeRate       — local currency per 1 USD (initial: 100)
+  usdUsage           — share of activity in USD (%)
+  localUsage         — 100 − usdUsage
+  importCostIndex    — normalized import burden index (initial: 100)
+  stabilityScore     — composite 0–100 (initial: 78)
+
+4.2 Parameters (user-controlled sliders, 0–100 unless noted)
+
+Economy structure:
+  importDependency   — reliance on imported goods/inputs
+  gdpStrength        — resilience / shock absorption
+  fxReserveStrength  — external buffer capacity
+
+Monetary policy:
+  moneyPrintingRate  — liquidity / monetization looseness
+  interestRate       — policy tightness
+  fxInterventionStrength — official lean against depreciation
+
+Public behavior:
+  trustInLocalCurrency — willingness to hold local money
+  usdPreference      — taste for dollar assets and invoicing
+  panicSensitivity   — amplification of stress responses
+
+4.3 Shock Modifiers (temporary, stackable)
+
+  Oil price spike (6 months):
+    +14 effective import dependency; +0.12 monthly inflation bonus
+
+  War / import disruption (8 months):
+    +22 import dependency; +0.20 monthly inflation; −6 reserves
+
+  IMF bailout (10 months):
+    +28 reserves; −0.10 monthly inflation
+
+4.4 Key Equations (conceptual summary)
+
+Effective import dependency and reserves apply shock bonuses then clamp to
+[0, 100].
+
+FX pressure = clamp(pulls × panicAmplify − buffers, 0, 100)
+
+Net monthly depreciation = max(0, pressureDepreciation − rateSupport − reserveSupport)
+
+New exchange rate = old rate × (1 + netMonthlyDepreciation)
+
+Import cost index = (new rate / initial rate) × effective import dependency
+
+Stability = clamp(100 − penalties + rewards, 0, 100)
+
+Full coefficient values are implemented in src/engine/simulation.ts.
+
+================================================================================
+                    5. SIMULATION METHODOLOGY
+================================================================================
+
+5.1 Discrete-Time Stepping
+
+Time advances in uniform monthly ticks. Users may run continuously (1×, 2×, 5×
+speed), step one month manually, or reset while retaining parameters. History
+retains the last 100 months for charting.
+
+5.2 Initial Conditions
+
+Default initial state: month 0, inflation 6%, exchange rate 100, USD usage 28%,
+import cost index 100, stability 78. Presets replace both parameters and initial
+state.
+
+5.3 Identification Strategy (Illustrative)
+
+Because the model is not econometrically estimated, "results" are comparative
+statics across presets and shock combinations. Experiments hold all parameters
+fixed except the dimension under study, then run forward 24–60 months.
+
+5.4 Implementation
+
+The engine is written in TypeScript, executed client-side in a web application.
+Persistence uses browser localStorage. This ensures reproducibility of scenarios
+without a server-side calibration pipeline.
+
+================================================================================
+                  6. SCENARIO ANALYSIS AND RESULTS
+================================================================================
+
+6.1 Stable Economy Preset
+
+Low import dependency (28), strong GDP and reserves, moderate monetization,
+high trust, low panic. Typical outcome: exchange rate drifts modestly;
+inflation remains single-digit to low double-digit; USD share stable; status
+Stable. Serves as control case.
+
+6.2 Emerging Market Stress
+
+Higher imports, thinner reserves, more printing, elevated USD preference and
+panic. FX pressure rises within 6–12 months; inflation accelerates; USD usage
+climbs; status transitions Weak → Crisis unless policy sliders tightened
+mid-run.
+
+6.3 Import Crisis
+
+Very high import dependency (78), weak reserves and trust. Import cost index
+and FX pressure co-move sharply with even moderate depreciation. Demonstrates
+the import–FX loop central to RQ1: structure dominates when buffers are thin.
+
+6.4 Hyperinflation Spiral
+
+Extreme money printing (88), low trust and reserves, high panic and USD
+preference. Inflation spiral term dominates mid-run; dollarization exceeds 50%;
+stability collapses; Collapse status often within 18–30 months in default
+runs.
+
+6.5 Peg Collapse
+
+High intervention (72) with low reserves (32) and elevated panic. Intervention
+relief is limited by reserve scaling; latent pressure accumulates; sudden
+depreciation phases possible when pressure persistently exceeds support—
+mirroring delayed peg failures.
+
+6.6 Shock Experiments
+
+From Stable Economy baseline:
+
+  - Oil spike alone: temporary inflation and import index rise; recovery if
+    shock expires before panic amplifies feedback.
+
+  - War disruption: stronger and longer stress; reserve penalty can push
+    intervention effectiveness below perceived commitment.
+
+  - IMF bailout: partial stabilization; inflation bonus reduction and reserve
+    boost buy time but do not replace structural reform (low import dependency
+    and trust still required for long-run stability).
+
+6.7 Policy Tradeoffs (RQ3)
+
+Raising interest rates reduces net depreciation and damps inflation but may be
+insufficient if reserves are depleted and import dependency is high. FX
+intervention without reserves produces minimal pressure relief in the formula
+(intervention × reserves interaction). Trust acts as a cross-cutting buffer:
+high trust reduces pass-through, slows dollarization, and lowers FX pressure.
+
+================================================================================
+                       7. POLICY IMPLICATIONS
+================================================================================
+
+7.1 Structural vs. Cyclical Policy
+
+The simulations reinforce that cyclical tightening cannot fully offset weak
+structure. High import dependency and low trust create conditions where standard
+rate hikes slow but do not reverse spirals.
+
+7.2 Credibility and Expectations
+
+Trust and panic parameters function as expectation shifters. Policies that
+restore credibility (fiscal consolidation, independent central bank, transparent
+FX regime) align with lower panic sensitivity in practice—modeled here as
+exogenous slider improvements.
+
+7.3 Shock Preparedness
+
+Building reserve buffers and diversifying import sources reduce vulnerability to
+oil and supply shocks. The IMF shock module illustrates short-term liquidity
+relief without guaranteed exit from Weak status if underlying parameters remain
+stressed.
+
+7.4 Dollarization as Policy Constraint
+
+Rising USD usage erodes stability score directly and reflects shrinking monetary
+sovereignty. Re-dollarization requires sustained inflation control and trust
+recovery, not only a one-off devaluation.
+
+================================================================================
+                   8. LIMITATIONS AND EXTENSIONS
+================================================================================
+
+8.1 Limitations
+
+  - No explicit labor market, output gap, or welfare metrics
+  - No government budget constraint or debt dynamics
+  - Single foreign currency (USD); no euro or regional currencies
+  - Reduced-form behavioral parameters rather than estimated elasticities
+  - No spatial heterogeneity or distributional effects
+  - Depreciation floor at zero net monthly change (no sustained appreciation path)
+
+8.2 Possible Extensions
+
+  - Endogenize trust as a function of past inflation and policy surprises
+  - Add wage–price indexation channel
+  - Introduce capital controls as additional policy slider
+  - Export simulation trajectories for econometric comparison with country panels
+  - Stochastic shocks for Monte Carlo crisis probability
+
+================================================================================
+                          9. CONCLUSION
+================================================================================
+
+This thesis presented an economics-oriented analysis of the Currency Stability
+Simulator, a discrete-time model of FX pressure, pass-through inflation,
+dollarization, and composite stability. By making feedback loops explicit and
+interactive, the tool helps students and policymakers develop intuition for
+path-dependent crises that static models underemphasize.
+
+Scenario analysis across five presets and three shock types supports four
+qualitative conclusions:
+
+  1. External structure (imports, reserves) sets the baseline vulnerability.
+  2. Expectations and panic amplify otherwise manageable shocks.
+  3. Intervention credibility requires real buffers, not declared intent alone.
+  4. Dollarization is both symptom and accelerator of instability.
+
+Future work should link selected coefficients to meta-analytic priors from
+pass-through and crisis literature, while preserving the simulator's
+transparency. Even as a stylized teaching instrument, the model clarifies why
+currency stability is a system property—not a single policy lever.
+
+================================================================================
+                           REFERENCES
+================================================================================
+
+Burstein, A., and Gopinath, G. (2014). International prices and exchange rates.
+  In Handbook of International Economics, Vol. 4. Elsevier.
+
+Calvo, G. A., and Vegh, C. A. (1992). Currency substitution in developing
+  countries. Revista de Análisis Económico, 7(1), 3–27.
+
+Epstein, J. M. (2006). Generative Social Science. Princeton University Press.
+
+Farmer, J. D., and Foley, D. (2009). The economy needs agent-based modelling.
+  Nature, 460(7256), 685–686.
+
+Goldberg, P. K., and Knetter, M. M. (1997). Goods prices and exchange rates.
+  Journal of Economic Literature, 35(3), 1243–1272.
+
+Guidotti, P. E., and Rodriguez, C. A. (1992). Dollarization in Latin America.
+  IMF Staff Papers, 39(3), 518–544.
+
+Krugman, P. (1979). A model of balance-of-payments crises. Journal of Money,
+  Credit and Banking, 11(3), 311–325.
+
+Obstfeld, M. (1994). The logic of currency crises. Banque de France Economic
+  Papers, 43.
+
+Sargent, T. J., and Wallace, N. (1981). Some unpleasant monetarist arithmetic.
+  Federal Reserve Bank of Minneapolis Quarterly Review, 5(3), 1–17.
+
+================================================================================
+              APPENDIX A: VARIABLE AND PARAMETER DEFINITIONS
+================================================================================
+
+See GUIDE.md and src/engine/types.ts for UI labels and TypeScript interfaces.
+See src/engine/simulation.ts for computeFxPressure, tickSimulation, and
+getSystemStatus implementations.
+
+================================================================================
+                APPENDIX B: PRESET PARAMETER VALUES
+================================================================================
+
+Preset                  | import | gdp | reserves | printing | rate | interven.
+------------------------|--------|-----|----------|----------|------|----------
+Stable Economy          |   28   |  72 |    68    |    18    |  52  |    35
+Emerging Market Stress  |   52   |  48 |    38    |    38    |  40  |    48
+Import Crisis           |   78   |  42 |    28    |    45    |  32  |    55
+Hyperinflation Spiral   |   62   |  35 |    22    |    88    |  22  |    30
+Peg Collapse            |   58   |  50 |    32    |    42    |  28  |    72
+
+(trust, usdPreference, panicSensitivity vary by preset; see src/engine/presets.ts)
+
+================================================================================
+                              END OF DOCUMENT
+================================================================================

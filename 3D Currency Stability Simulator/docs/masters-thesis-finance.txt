@@ -1,0 +1,458 @@
+================================================================================
+MASTER'S THESIS — FINANCE
+================================================================================
+
+Title:
+  Financial Stability, FX Risk, and Dollarization: A Real-Time Interactive
+  Model for Reserve Management and Market Stress Visualization
+
+Author:
+  [Candidate Name]
+
+Degree:
+  Master of Science in Finance
+
+Institution:
+  [University Name]
+
+Department:
+  Department of Finance
+
+Supervisor:
+  [Supervisor Name]
+
+Date:
+  June 2026
+
+================================================================================
+ABSTRACT
+================================================================================
+
+Financial stability in emerging markets hinges on the joint behavior of spot
+FX, inflation-linked real returns, official reserve buffers, and private
+dollarization of balance sheets. This thesis examines the "3D Currency
+Stability Simulator," a browser-based financial macro prototype that updates
+key risk indicators monthly from six policy and market-friction controls. The
+system produces trajectories for exchange rate depreciation, inflation,
+normalized FX reserves, USD share of economic activity, trust, FX pressure,
+and a composite stability score suitable for risk dashboards and scenario
+stress testing in education.
+
+Unlike production risk engines, the model is deliberately reduced-form and
+deterministic: it prioritizes transparent feedback loops over econometric
+forecast accuracy. Finance contributions include (i) framing FX pressure as a
+latent risk factor driving depreciation and reserve drawdown; (ii) linking
+intervention intensity to reserve replenishment with state-dependent
+effectiveness; (iii) modeling dollarization as an endogenous market share
+process driven by inflation, preference, and panic; and (iv) mapping financial
+stress to real-time 3D cues (liquidity-colored flows, network exposure lines,
+crisis overlays) aligned with quantitative HUD metrics.
+
+Five calibrated narrative scenarios span from stable macro-financial conditions
+to currency collapse. The thesis discusses use in treasury training, sovereign
+risk communication, and limitations relative to VaR, sovereign spread models,
+and balance-sheet-based dollarization metrics.
+
+Keywords: financial stability, FX risk, reserve management, dollarization,
+intervention policy, stress scenarios, interactive risk visualization
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+1. Introduction
+2. Financial Stability and FX Risk: Literature Review
+3. Risk Factor Architecture and Dynamics
+4. Intervention, Reserves, and Policy Space
+5. Dollarization as Market Share and Balance-Sheet Risk
+6. Visualization for Financial Risk Communication
+7. Software Implementation and Scenario Library
+8. Stress Testing Applications and Governance
+9. Limitations, Model Risk, and Extensions
+10. Conclusion
+References
+Appendix A: Variable Definitions for Risk Reporting
+Appendix B: Implementation Reference (tickSimulation)
+
+================================================================================
+1. INTRODUCTION
+================================================================================
+
+1.1 Problem Statement
+
+Corporate treasurers, sovereign debt investors, and macro-prudential authorities
+monitor overlapping indicators: spot and forward FX, inflation breakevens or
+CPI prints, reserve cover, and signs of liability dollarization. During stress,
+these series interact non-linearly—depreciation raises import prices, erodes
+real local-currency returns, accelerates FX hedging and USD adoption, and
+consumes central bank buffers. Static risk reports understate path-dependent
+escalation.
+
+1.2 Objectives
+
+This thesis:
+
+(O1) Formalizes the simulator as a multi-factor stress toy model for finance
+     audiences.
+
+(O2) Interprets each control slider as a financial policy or market friction.
+
+(O3) Demonstrates scenario presets as narrative stress tests.
+
+(O4) Articulates model risk, governance, and boundaries versus production
+     systems.
+
+1.3 Scope
+
+The artifact is an educational and communication tool implemented in TypeScript
+for client-side execution. It does not provide investment advice, regulatory
+capital calculations, or calibrated sovereign default probabilities.
+
+1.4 Outline
+
+Chapters 2–5 develop financial interpretation; Chapter 6 covers visualization;
+Chapter 7 implementation; Chapter 8 applications; Chapter 9 limitations.
+
+================================================================================
+2. FINANCIAL STABILITY AND FX RISK: LITERATURE REVIEW
+================================================================================
+
+2.1 Sovereign FX Risk and Reserve Buffers
+
+Literature on reserve adequacy (IMF frameworks; Jeanne and Rancière, 2011)
+stresses months-of-imports cover and short-term external debt ratios. The
+simulator compresses these into a normalized reserve stock depleted by pressure
+and large monthly depreciations, replenished by intervention—useful for intuition,
+not for reserve targeting rules.
+
+2.2 Official Intervention and Sterilization
+
+FX intervention can stabilize spot rates but has fiscal and quasi-fiscal costs
+(Adler et al., 2015). The model's fxIntervention control reduces pressure and
+inflation modestly while adding reserves, with diminished real-world efficacy
+when buffers are thin—mirroring market skepticism toward prolonged defense of
+misaligned pegs.
+
+2.3 Inflation and Real Returns
+
+High inflation erodes real returns on local-currency instruments, shifting
+portfolio demand toward USD assets (Fisher effect and currency substitution).
+Money printing in the model maps to expansionary policy or monetization shocks.
+
+2.4 Dollarization and Balance Sheets
+
+Full dollarization literature (Honohan and Shi, 2002) distinguishes asset
+substitution, liability dollarization, and payment dollarization. The simulator's
+usdUsage aggregate proxies combined market share effects relevant for FX liquidity
+risk: greater USD share implies higher sensitivity to offshore rate shocks and
+potential mismatch if incomes remain local.
+
+2.5 Stress Testing and Narrative Scenarios
+
+Regulatory stress tests (BCBS principles) require transparent scenarios. The
+preset library offers reproducible narrative paths (emerging stress, import
+crisis, hyperinflation, collapse) analogous to simplified top-down scenarios
+without bank-level granularity.
+
+================================================================================
+3. RISK FACTOR ARCHITECTURE AND DYNAMICS
+================================================================================
+
+3.1 Risk Factors and Observables
+
+Primary factors:
+  - FX pressure (latent composite)
+  - Panic (behavioral amplification)
+  - Inflation (price instability)
+  - Exchange rate (spot depreciation vs anchor)
+  - FX reserves (buffer)
+  - USD usage (dollarization / market share)
+  - Trust (credibility, affects flows)
+
+Outputs for monitoring:
+  - stabilityScore (0–100): composite financial stability index
+  - gdpIndex: activity proxy for concomitant real-sector risk
+
+3.2 FX Pressure as Composite Index
+
+FX pressure loads positively on import dependency, inflation (capped contribution),
+USD preference, and reserve weakness; negatively on intervention. In finance
+terms, it resembles a parsimonious Z-score combining external vulnerability and
+market structure biases toward hard currency.
+
+3.3 Depreciation Process
+
+Monthly depreciation intensity rises when pressure exceeds a neutral band (0.25)
+and with panic. This resembles a reduced-form drift in spot FX under stress,
+without explicit interest-rate parity or forward curve.
+
+3.4 Inflation as Risk Driver
+
+Inflation enters through:
+  - direct money printing channel with acceleration in high-inflation states;
+  - imported inflation via exchange rate pass-through;
+  - panic-feedback consistent with unanchored expectations.
+
+For fixed-income readers, sustained inflation paths imply negative real yields
+on unindexed local bonds.
+
+3.5 Stability Score as Composite Indicator
+
+The stability score penalizes inflation, FX pressure, dollarization, and low
+trust; rewards reserves. It can be treated as an internal heat index for
+visualization and teaching, not a published FSI substitute.
+
+================================================================================
+4. INTERVENTION, RESERVES, AND POLICY SPACE
+================================================================================
+
+4.1 Reserve Drawdown Mechanics
+
+Reserves decrease when fxPressure exceeds 0.28, modeling sustained defense or
+import-related outflows. Additional drawdown triggers when monthly depreciation
+exceeds roughly 8%, scaled by import dependency—capturing larger import bills and
+potential capital flight in reduced form.
+
+4.2 Intervention Replenishment
+
+Positive intervention adds to reserves each month. Combined with pressure
+reduction, this represents sterilized or partially sterilized intervention under
+favorable conditions. When reserves are already low, pressure remains elevated—
+an informal representation of diminishing marginal credibility.
+
+4.3 Policy Frontier (Illustrative)
+
+Finance trade-off: defending the currency (intervention up) depletes reserves
+unless offset by inflows; allowing depreciation raises imported inflation and
+dollarization. Classroom users can trace efficient-frontier intuition manually
+by sweeping intervention versus outcomes.
+
+4.4 FX Intervention Slider Interpretation
+
+Maps to intensity of official spot market operations and related macro-prudential
+FX measures. Does not distinguish spot versus swap intervention or NDF markets.
+
+================================================================================
+5. DOLLARIZATION AS MARKET SHARE AND BALANCE-SHEET RISK
+================================================================================
+
+5.1 Dynamics
+
+USD usage increases with:
+  - inflation (opportunity cost of holding local money),
+  - usdPreference (structural dollarization),
+  - panic (flight to quality).
+
+It decreases with trustInLocal (credibility, deposit insurance perceptions,
+anchored policy).
+
+5.2 Financial Stability Implications
+
+Rising usdUsage correlates in the model with higher fxPressure loading and lower
+stabilityScore weights—consistent with concern that dollarization raises
+macro-financial fragility even if it reduces inflation risk for individual agents.
+
+5.3 Liquidity Visualization
+
+Particle color mix (green local, blue USD) provides immediate market-share
+feedback, analogous to watching rising offshore dollarization in payment data.
+
+5.4 Limits
+
+No separate tracking of FX loans, unhedged corporates, or deposit dollarization
+ratios—extensions left to future balance-sheet modules.
+
+================================================================================
+6. VISUALIZATION FOR FINANCIAL RISK COMMUNICATION
+================================================================================
+
+6.1 Design Goals
+
+- Synchronize quantitative HUD with perceptual risk cues.
+- Encode network exposure (import lines) for supply-chain FX risk discussions.
+- Use crisis fog/shake/distortion only when stability and inflation thresholds
+  indicate severe stress—avoiding false alarms in benign regions.
+
+6.2 Mapping Table (Finance View)
+
+| Visual element      | Financial interpretation                          |
+|---------------------|---------------------------------------------------|
+| Building height     | Real activity / revenue proxy (gdpIndex)          |
+| Building lean       | FX pressure / imbalance                           |
+| Green particles     | Local currency liquidity flows                    |
+| Blue particles      | USD liquidity dominance                           |
+| Import lines        | Trade/exposure network thickness                  |
+| Fog / shake         | Systemic stress regime                            |
+| Sparklines          | Historical risk factor trends                     |
+
+6.3 Communication Governance
+
+Any public use should display disclaimers: illustrative coefficients, not
+bank-specific or country-calibrated projections.
+
+================================================================================
+7. SOFTWARE IMPLEMENTATION AND SCENARIO LIBRARY
+================================================================================
+
+7.1 Stack
+
+React + Vite front end; Zustand state; tickSimulation in simulation.ts;
+React Three Fiber scene components (city, particles, import network, crisis
+effects). Monthly tick via SimulationClock or manual step.
+
+7.2 History and Analytics
+
+History buffer supports sparklines for inflation, FX, USD adoption, stability—
+minimal time-series infrastructure for classroom debriefs.
+
+7.3 Scenario Presets (Stress Narratives)
+
+1. Stable Economy — baseline risk appetite.
+2. Emerging Market Stress — elevated FX and inflation vol.
+3. Import Crisis — external shock with thin buffers.
+4. Hyperinflation Spiral — monetization + panic feedback.
+5. Currency Collapse — reserves near exhaustion, usdUsage ~ 94%.
+
+Each preset sets controls and partial initial state for reproducible workshops.
+
+7.4 Determinism
+
+Paths are reproducible given seeds and controls—important for audit trails in
+training exercises.
+
+================================================================================
+8. STRESS TESTING APPLICATIONS AND GOVERNANCE
+================================================================================
+
+8.1 Treasury Training
+
+Participants adjust intervention and trust controls while watching reserve and
+depreciation paths—learning buffer management under import shocks.
+
+8.2 Sovereign Risk Seminars
+
+Presets facilitate discussion of tail paths resembling historical EM crises
+without claiming empirical fit.
+
+8.3 Model Risk Management
+
+Users must document:
+  - illustrative nature of coefficients;
+  - absence of stochastic shocks (optional extensions);
+  - no credit event or banking sector module.
+
+8.4 Ethical Use
+
+Not for retail product marketing or automated trading signals.
+
+================================================================================
+9. LIMITATIONS, MODEL RISK, AND EXTENSIONS
+================================================================================
+
+9.1 Model Risk Register
+
+| Risk                    | Description                                      |
+|-------------------------|--------------------------------------------------|
+| Parameter uncertainty   | Coefficients not econometrically estimated       |
+| Omitted variables       | No rates, spreads, debt, or banks                |
+| Time aggregation        | Monthly step masks intra-day FX volatility       |
+| Determinism             | No shock distribution or confidence bands        |
+| Dollarization aggregate | Single usdUsage vs decomposed balance sheets     |
+
+9.2 Extensions
+
+- Add stochastic FX and inflation shocks (Monte Carlo bands).
+- Calibrate to country panels (reserves/imports, CPI, NEER).
+- Introduce short-term external debt and rollover risk.
+- Export CSV for comparison with market-implied vol surfaces.
+- Integrate value-at-risk on illustrative FX exposures.
+
+9.3 Validation Path
+
+Backtest qualitative ordering only (e.g., collapse preset more severe than
+stable); formal metrics (CRPS, diebold-mariano) inapplicable without data link.
+
+================================================================================
+10. CONCLUSION
+================================================================================
+
+From a finance perspective, the 3D Currency Stability Simulator is a
+transparent, client-side stress narrative engine linking FX pressure, reserves,
+dollarization, and inflation into coherent risk trajectories. Its value lies in
+financial literacy, workshop stress scenarios, and communication—not in
+replacing sovereign risk models or enterprise risk systems. When governed
+appropriately, it makes path-dependent FX and stability trade-offs accessible;
+future work should add stochastic elements, balance-sheet dollarization metrics,
+and empirical calibration to market and official statistics.
+
+================================================================================
+REFERENCES
+================================================================================
+
+Adler, G., Lisack, N., and Mano, R. (2015). Unveiling the effects of foreign
+  exchange intervention. IMF Working Paper 15/130.
+
+Basel Committee on Banking Supervision (2018). Stress testing principles.
+
+Honohan, P., and Shi, A. (2002). Deposit dollarization and the financial sector
+  in emerging economies. World Bank Policy Research Working Paper.
+
+IMF (2016). Assessing reserve adequacy—specific proposals. IMF Policy Paper.
+
+Jeanne, O., and Rancière, R. (2011). The optimal level of international reserves
+  for emerging market countries. Journal of International Money and Finance.
+
+Jeanne, O., and Korinek, A. (2010). Managing credit booms and busts. NBER WP.
+
+Reinhart, C. M., Rogoff, K. S., and Savastano, M. A. (2003). Debt intolerance.
+  Brookings Papers on Economic Activity.
+
+================================================================================
+APPENDIX A: VARIABLE DEFINITIONS FOR RISK REPORTING
+================================================================================
+
+EconomicState (monthly observables):
+  inflation          — annualized price growth (decimal)
+  exchangeRate       — spot units per USD anchor (1 = baseline)
+  usdUsage           — USD market share [0,1]
+  localUsage         — 1 - usdUsage
+  fxReserves         — normalized reserve buffer [0,1]
+  trust              — credibility / confidence [0,1]
+  fxPressure         — composite FX stress [0,1]
+  stabilityScore     — internal stability index [0,100]
+  gdpIndex           — real-sector proxy [0,1]
+
+SimulationControls (policy / friction inputs):
+  importDependency   — trade exposure
+  moneyPrinting      — monetization / liquidity shock
+  fxIntervention     — official FX support intensity
+  trustInLocal       — credibility support
+  usdPreference      — structural USD bias
+  panicSensitivity   — behavioral amplification
+
+Default controls (see presets.ts): importDependency 0.28, moneyPrinting 0.12,
+fxIntervention 0.45, trustInLocal 0.72, usdPreference 0.22, panicSensitivity 0.25.
+
+================================================================================
+APPENDIX B: IMPLEMENTATION REFERENCE (tickSimulation)
+================================================================================
+
+Source: src/engine/simulation.ts — one deterministic monthly update.
+
+Core financial channels:
+
+1. FX pressure ← imports, inflation, USD preference, intervention, reserves.
+2. Panic ← pressure, inflation, panicSensitivity.
+3. Depreciation ← pressure band breach + panic.
+4. Inflation ← printing, imported pass-through, panic, intervention offset.
+5. USD usage ← inflation, preference, panic; trust mitigates.
+6. Reserves ← pressure drain, intervention build, depreciation shock.
+7. Trust ← persistence, trustInLocal support, inflation/FX/panic erosion.
+8. stabilityScore, gdpIndex ← composite functions for monitoring and visuals.
+
+For equation-level detail, see Appendix B in the economics thesis document or
+the project GUIDE.md and simulation source.
+
+================================================================================
+END OF DOCUMENT
+================================================================================

@@ -1,0 +1,441 @@
+================================================================================
+MASTER'S THESIS — FINANCE
+================================================================================
+
+Title:
+  Currency Erosion, Velocity Risk, and Policy Credibility:
+  A Financial–Macro Simulation of Hyperinflation Control
+
+Author:
+  [Candidate name]
+
+Department:
+  Finance
+
+Institution:
+  [University name]
+
+Date:
+  June 2026
+
+================================================================================
+ABSTRACT
+================================================================================
+
+From a finance perspective, hyperinflation is an extreme regime in which the domestic
+currency fails as a store of value, real money balances collapse, and asset-allocation
+decisions dominate macro outcomes. This thesis analyses the Hyperinflation Control
+Simulator—a browser-based policy dashboard—as a stylised laboratory for currency
+risk, purchasing-power loss, and credibility-driven velocity dynamics.
+
+The model tracks a currency purchasing-power index, money supply growth, and a
+composite “currency health” metric derived from confidence and inflation. Policy
+instruments (money printing, fiscal spending, interest rates, taxes) map to paths
+that resemble distressed sovereign finance: monetised deficits, negative real rates,
+and feedback between inflation and confidence. Three presets (stable, crisis, spiral)
+demonstrate how financial fragility escalates when monetisation outpaces real growth
+and institutional trust erodes.
+
+The thesis concludes that the simulator is a valuable teaching and risk-intuition
+tool for finance students studying emerging-market crises, real-asset hedging, and
+central-bank credibility, provided its reduced-form structure and lack of market
+microstructure are clearly acknowledged.
+
+Keywords: currency risk, purchasing power, velocity, sovereign finance, inflation
+hedging, policy credibility, simulation, financial stability.
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+1.  Introduction
+2.  Financial Economics of High Inflation
+3.  Framework: Balance Sheets and Flows in Reduced Form
+4.  Model from a Finance Lens
+5.  Metrics: Currency Index and Health
+6.  Scenario and Risk Analysis
+7.  Implications for Portfolio and Institutional Finance
+8.  Implementation Notes
+9.  Limitations and Extensions
+10. Conclusion
+11. References
+Appendix A: Formula Reference
+Appendix B: Preset Parameter Table
+
+================================================================================
+1. INTRODUCTION
+================================================================================
+
+1.1 Problem Statement
+
+Finance practitioners and researchers encounter hyperinflation primarily through
+currency collapse, capital flight, dollarisation, and the repricing of nominal claims.
+Unlike a gradual rise in CPI, hyperinflation destroys the unit of account within
+months or weeks, forcing indexation, foreign-currency contracts, and real-asset
+substitution.
+
+Understanding how policy choices accelerate or contain this process is essential for
+sovereign risk analysis, emerging-market debt, and inflation-linked instrument design.
+
+1.2 Objectives
+
+This thesis:
+
+  (1) Interprets the Hyperinflation Control Simulator in financial terms—currency
+      depreciation of purchasing power, velocity as turnover risk, and interest rates
+      as credibility instruments.
+
+  (2) Documents how the software computes currency index and health metrics.
+
+  (3) Evaluates preset scenarios as stress cases analogous to crisis and spiral regimes.
+
+  (4) Discusses portfolio and institutional implications within the model’s limits.
+
+1.3 Relation to the Economics Thesis
+
+A companion economics thesis emphasises quantity theory, fiscal–monetary interaction,
+and pedagogy. The present document emphasises asset erosion, risk metrics, and
+financial stability intuition. Both refer to the same codebase (simulationStore.ts).
+
+================================================================================
+2. FINANCIAL ECONOMICS OF HIGH INFLATION
+================================================================================
+
+2.1 Currency as an Asset
+
+Holding domestic currency is equivalent to holding a nominal claim with zero coupon
+and uncertain real return. Expected real return ≈ nominal interest minus expected
+inflation minus risk premium. When inflation exceeds nominal rates, real returns on
+cash are deeply negative—classic financial repression. Agents reduce balances (high V)
+and shift to goods, foreign currency, or indexed assets.
+
+2.2 Fisher Equation and Credibility
+
+The Fisher relation links nominal rates, real rates, and inflation expectations. In
+the simulator, the policy rate i enters twice: it dampens real output growth (tight
+money channel) and supports confidence (credibility channel). Low i during high
+printing mimics negative real policy rates—a hallmark of monetised fiscal stress.
+
+2.3 Velocity and Liquidity Risk
+
+Velocity rises when money is a “hot potato.” Financially, this is liquidity risk on
+the monetary base: holders minimise exposure duration. The model sets V = 1 when
+confidence is maximal and up to roughly 3.2 when confidence is minimal, feeding back
+into inflation through Φ.
+
+2.4 Sovereign Finance Sketch
+
+Although the simulator does not model bond markets explicitly, the sliders map to
+familiar sovereign trade-offs:
+
+  • High G with low τ → implicit need for monetisation or debt (printing slider).
+  • High π_m → seigniorage / deficit financing.
+  • Low i → accommodative stance, weak currency support.
+  • High i → stabilisation but growth drag.
+
+The “spiral” preset is a caricature of unsustainable sovereign finance: large spending,
+low tax effort, aggressive monetisation, near-zero rates.
+
+2.5 Literature Touchpoints
+
+  • Cagan money-demand instability during hyperinflation.
+  • Bruno and Fischer (1990) on stabilisation and budget constraints.
+  • Reinhart and Rogoff (2009) on default and inflation history.
+  • Modern EM sovereign analysis (Eichengreen, Hausmann) on original sin and
+    dollarisation—conceptually relevant though not modelled here.
+
+================================================================================
+3. FRAMEWORK: BALANCE SHEETS AND FLOWS IN REDUCED FORM
+================================================================================
+
+3.1 Simplified Household–Government Split
+
+Represent the private sector as holding real money balances M/P (proxied by index M
+with fixed baseline price level normalisation). Government spending G boosts output
+index Y; taxes τ withdraw resources. Central bank accommodation appears as π_m.
+
+3.2 Nominal vs Real Wealth
+
+  • Money supply M grows at rate π_m each month.
+  • Purchasing power index κ erodes when π > 0: κ' = κ · 100/(100 + π).
+  • After n months of constant π, κ ≈ κ₀ · (100/(100+π))^n — geometric decay of
+    real value.
+
+This is the key financial series for “how much does a unit of currency buy.”
+
+3.3 Confidence as Intangible Capital
+
+Confidence C acts like institutional capital affecting velocity and inflation premia.
+Loss of C is analogous to rising country risk premium: faster pass-through of money
+growth to prices and harder stabilisation.
+
+================================================================================
+4. MODEL FROM A FINANCE LENS
+================================================================================
+
+4.1 Inputs and State (Monthly)
+
+  Controls: π_m (printing), G (spending index), i (rate), τ (tax)
+  States: M, Y, C, V (derived), κ, π (current inflation)
+
+4.2 Return on Holding Currency
+
+Implicit monthly real loss on cash when inflation is π and no interest on M:
+
+  real_erosion ≈ −π/(100+π)  [from κ update, first-order]
+
+Nominal deposits paying i are not modelled separately; i affects inflation only through
+policy channels above.
+
+4.3 Inflation as Risk Factor
+
+  π = max(−2, π_m − g_Y + Φ)
+
+where g_Y is clamped real growth and
+
+  Φ = (1 − C/100)·3.2 + max(0, V−1)·2.4
+
+Φ is a risk premium-like shifter: when confidence is low, inflation exceeds naive
+money-growth-minus-output arithmetic.
+
+4.4 Feedback Loop (Financial Stability View)
+
+  High π → lower C → higher V and Φ → higher π → lower κ
+
+This positive feedback is the financial stability concern: once κ and C deteriorate,
+voluntary dollarisation or indexation in real economies becomes rational; the model
+captures the macro precursor without modelling contract denomination.
+
+4.5 Interest Rate as Stabilisation Tool
+
+Each point of i adds 0.12 to C per month and subtracts from g_Y. Finance interpretation:
+the central bank trades short-term output cost for credibility, reducing future Φ.
+Whether this stabilises κ depends on whether inflation falls faster than growth damage.
+
+================================================================================
+5. METRICS: CURRENCY INDEX AND HEALTH
+================================================================================
+
+5.1 Currency Index κ
+
+  • Baseline 100 at reset or preset load.
+  • Not an FX rate against USD; domestic purchasing power only.
+  • Declines multiplicatively with positive monthly inflation.
+
+Use case: illustrate cumulative wealth erosion on nominal cash positions.
+
+5.2 Currency Health (0–100)
+
+  health = clamp(0.85·C − 1.8·min(55, max(0,π)) + 12, 0, 100)
+
+Interpretation:
+
+  • Base weight on confidence (85% scale).
+  • Inflation penalty up to 55 points (capped).
+  • Offset +12 for UI baseline.
+
+Health is a composite risk dashboard metric, not a market price. It correlates with
+warning bands: stable (π<5%), unstable (5–25%), hyperinflation (π≥25%).
+
+5.3 Annualised Inflation Display
+
+UI shows 12×π (simple). For finance users, compounded annual inflation would be
+(1+π/100)^12 − 1; the simulator uses the simpler display deliberately.
+
+5.4 Charted Series
+
+  • Inflation % (left axis)
+  • Money supply M (right axis)
+  • Currency index κ (right axis)
+
+Joint movement: in spiral preset, M rises while κ falls—classic “more money, less
+value per unit.”
+
+================================================================================
+6. SCENARIO AND RISK ANALYSIS
+================================================================================
+
+6.1 Stable Preset — Baseline Risk
+
+  π_m=0.9%, G=42, i=5%, τ=24%, C₀=75
+
+Financial reading: moderate monetisation, credible rate, adequate tax effort. κ
+typically declines slowly if at all; health remains elevated. Suitable benchmark for
+“investable” domestic currency regime in stylised terms.
+
+6.2 Crisis Preset — Elevated Sovereign Stress
+
+  π_m=4.5%, G=82, i=1.5%, τ=14%, C₀=55
+
+Financial reading: fiscal expansion with weak monetisation restraint and low rates.
+Negative real policy stance. Expect κ to fall sharply within quarters (simulated
+months); velocity rises as C falls. Unstable warning band likely.
+
+6.3 Spiral Preset — Currency Collapse Regime
+
+  π_m=14%, G=92, i=0.5%, τ=8%, C₀=38
+
+Financial reading: extreme monetisation (14% M growth per month), maximal spending
+pressure, minimal tax, near-zero rates, low initial trust. Hyperinflation warnings
+(π≥25%) emerge quickly; κ approaches small fractions of 100 within a year of simulated
+time. Equivalent to holding cash with −14% nominal expansion plus inflation premium Φ.
+
+6.4 Sensitivity Themes for Finance Students
+
+  A. Printing dominates when Φ is large (low C).
+  B. Rate hikes support C but may reduce g_Y—stabilisation trilemma in miniature.
+  C. Fiscal expansion without tax backing raises g_Y short-term but fuels π via
+     sustained monetisation if π_m is high.
+  D. Path dependence: early rate hike may prevent spiral; late hike may be insufficient.
+
+6.5 Risk Metrics Not in Model
+
+  • FX forward premia, CDS spreads, capital controls
+  • Term structure of interest rates
+  • Bank balance-sheet dollarisation
+  • Crypto or informal dollarisation
+
+These are discussed as real-world extensions.
+
+================================================================================
+7. IMPLICATIONS FOR PORTFOLIO AND INSTITUTIONAL FINANCE
+================================================================================
+
+7.1 Nominal Cash and Deposits
+
+Under spiral dynamics, nominal cash loses purchasing power exponentially in κ. Real
+assets (commodities, foreign currency, indexed bonds) dominate in theory; the
+simulator motivates why EM portfolios overweight hard currency and inflation hedges
+during stress.
+
+7.2 Equities and Real Output
+
+Y may still grow under high G, but π erodes valuation multiples when discount rates
+rise with inflation risk. The model does not price equities; the lesson is that
+nominal GDP growth from inflation does not imply real wealth preservation.
+
+7.3 Fixed Income
+
+Nominal bonds are devastated in hyperinflation; inflation-linked instruments require
+credible indexation institutions absent here. Rate i in the model is a policy lever,
+not a market yield curve.
+
+7.4 Central Bank and Banking Sector
+
+High V implies rapid deposit turnover and potential disintermediation. Banks cannot
+profit from maturity transformation when real rates are deeply negative. Financial
+repression literature applies.
+
+7.5 Policy Game for Stabilisation
+
+Finance-oriented stabilisation typically requires:
+
+  • Fiscal consolidation (higher τ or lower G in the model)
+  • Monetary restraint (lower π_m, higher i)
+  • Confidence restoration (outcome of the above)
+
+The simulator lets users explore sequencing—e.g., rate hike without fiscal adjustment
+may fail if π_m remains high.
+
+================================================================================
+8. IMPLEMENTATION NOTES
+================================================================================
+
+8.1 Technology
+
+React + TypeScript + Zustand + Recharts; client-only, no persistence. computeStep()
+in simulationStore.ts is the single source of financial–macro dynamics.
+
+8.2 Control Flow
+
+SimulationControls.tsx runs tick() every 1000 ms when running. PolicyPanel sliders
+update store; changes affect next month.
+
+8.3 Reproducibility
+
+All coefficients are literals in source code—suitable for assignment questions (“raise
+credibility elasticity from 3.2 to 4.0 and compare κ paths”).
+
+================================================================================
+9. LIMITATIONS AND EXTENSIONS
+================================================================================
+
+9.1 Limitations
+
+  • No FX market, no carry trades, no capital account.
+  • No explicit government debt or default.
+  • No asset prices beyond κ proxy.
+  • Linear/threshold rules rather than estimated finance models.
+
+9.2 Possible Extensions
+
+  • Add foreign-currency asset with exchange rate tied to κ.
+  • Model indexed vs nominal bonds with different returns.
+  • Introduce inflation expectations as forward-looking state.
+  • Calibrate presets to historical episodes (Zimbabwe, etc.) with disclaimers.
+
+================================================================================
+10. CONCLUSION
+================================================================================
+
+The Hyperinflation Control Simulator offers finance students and practitioners a
+transparent environment to internalise how monetisation, fiscal expansion, and
+credibility interact to destroy purchasing power. The currency index κ and health
+metric translate macro policy into wealth erosion and stability risk. Presets span
+from stabilisation-friendly parameters to spiral regimes that replicate financial
+chaos in reduced form.
+
+Used with clear boundaries, the tool bridges monetary economics and financial risk
+management. It does not replace market data or sovereign models, but it clarifies
+why, in extreme regimes, the first priority is to stop the loss of real value in the
+domestic currency—and why that requires coordinated fiscal and monetary credibility.
+
+================================================================================
+11. REFERENCES
+================================================================================
+
+Bruno, M., & Fischer, S. (1990). Seigniorage, operating rules, and the high
+  inflation trap. Quarterly Journal of Economics, 105(2), 353–374.
+
+Cagan, P. (1956). The monetary dynamics of hyperinflation. In M. Friedman (Ed.),
+  Studies in the Quantity Theory of Money. University of Chicago Press.
+
+Eichengreen, B., & Hausmann, R. (2005). Other people’s money: Debt denomination
+  and financial instability in emerging market economies. University of Chicago Press.
+
+Fisher, I. (1930). The Theory of Interest. Macmillan.
+
+Reinhart, C. M., & Rogoff, K. S. (2009). This Time Is Different. Princeton
+  University Press.
+
+Sargent, T. J. (1982). The ends of four big inflations. In R. E. Hall (Ed.),
+  Inflation: Causes and Effects. University of Chicago Press.
+
+================================================================================
+APPENDIX A: FORMULA REFERENCE
+================================================================================
+
+g_Y = clamp(0.2 + 0.55(G/100) − 0.5(τ/100) − 0.35(i/100), −1.2, 4)
+V   = 1 + ((100 − C)/100) · 2.4
+Φ   = (1 − C/100) · 3.2 + max(0, V − 1) · 2.4
+π   = max(−2, π_m − g_Y + Φ)
+κ'  = κ · 100/(100 + max(0, π))
+health = clamp(0.85·C − 1.8·min(55, max(0,π)) + 12, 0, 100)
+
+Confidence update: see simulationStore.ts computeStep().
+
+================================================================================
+APPENDIX B: PRESET PARAMETER TABLE
+================================================================================
+
+                π_m(%)   G     i(%)   τ(%)   C₀
+Default         1.2     48     4.5    22     72
+Stable          0.9     42     5.0    24     75
+Crisis          4.5     82     1.5    14     55
+Spiral          14.0    92     0.5     8     38
+
+All presets reset M₀ = Y₀ = κ₀ = 100.
+
+================================================================================
+END OF DOCUMENT
+================================================================================

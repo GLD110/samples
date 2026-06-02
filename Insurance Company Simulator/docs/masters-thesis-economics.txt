@@ -1,0 +1,244 @@
+UNDERWRITING STRESS, MORAL HAZARD, AND MACRO SHOCKS IN A SYNTHETIC INSURANCE MARKET: AN ECONOMIC ANALYSIS OF AN INTERACTIVE SIMULATOR
+=======================================================================================================================================
+
+Master's thesis (Economics)
+Author: [Your Name]
+Institution: [Your University]
+Date: June 2026
+
+Note for submission: This document analyzes the open educational repository Insurance Company Simulator. Quantitative tables in Section 6 are computed from the deterministic formulas in src/lib/calculations.ts with default and preset parameters in src/lib/scenarios.ts. Replace bracketed fields before submitting; attach Export JSON or screenshots to verify your runs.
+
+
+------------------------------------------------------------------------
+
+
+Abstract
+--------
+
+Insurance pools idiosyncratic risk across policyholders, but contracts create incentives and information problems that shape market performance. Premiums must cover expected losses and expenses while remaining viable for consumers and insurers. Macroeconomic inflation, claims leakage, and catastrophe shocks redistribute surplus between insured and insurer and across cohorts. This thesis examines an interactive browser prototype that links claim frequency, severity, a stylized fraud or moral-hazard load, inflation drift, and operating expenses to loss ratio, combined ratio, and profit. Because the book is a controlled teaching model rather than a statistical estimate of a national market, the analysis is illustrative: it clarifies how economic stressors propagate through a simplified underwriting account. The contribution for an economics audience is to connect textbook insurance ratios to comparative statics on frequency, severity, leakage, and macro parameters, and to discuss limits of partial-equilibrium scenario analysis without demand or reinsurance markets.
+
+Keywords: insurance economics, moral hazard, inflation, catastrophe risk, combined ratio, stress testing, educational simulation
+
+
+------------------------------------------------------------------------
+
+
+1. Introduction
+---------------
+
+Private insurance reallocates resources across states of the world: policyholders pay a certain premium today to reduce exposure to uncertain future losses (Arrow, 1963). Insurers cannot fully observe risk types or post-contract behavior, which motivates underwriting, experience rating, and monitoring (Rothschild & Stiglitz, 1976; Zeckhauser, 1970). Even in introductory courses, students meet loss and combined ratios before they see how macro shocks or claims integrity interact with those aggregates.
+
+The Insurance Company Simulator is a client-side web application with fully transparent equations. Sliders control claim probability, average severity, book size, premium per policyholder, operating expense ratio, fraud loading, inflation, investment return, and volatility for chart paths. Preset scenarios bundle parameter shifts representing normal conditions, inflation pressure, elevated leakage, and catastrophe. This thesis documents that prototype from an economics perspective: what assumptions it embeds, what comparative statics it supports, and what welfare or equilibrium conclusions it cannot draw.
+
+Research questions addressed:
+
+1. How do adverse shifts in frequency, severity, and leakage affect underwriting performance on a fixed premium schedule?
+2. How does inflation enter the model, and what does it imply for real claim burdens over a simulated horizon?
+3. What institutional and ethical cautions apply when interpreting a scalar fraud parameter in classroom exercises?
+
+Section 2 develops the conceptual framework. Section 3 reviews related literature. Section 4 specifies the model. Section 5 summarizes implementation. Section 6 presents illustrative scenarios. Section 7 discusses policy and limitations. Section 8 concludes.
+
+
+------------------------------------------------------------------------
+
+
+2. Conceptual framework
+-----------------------
+
+2.1 Pooling and expected loss
+
+Let Y denote aggregate loss for the book in a period. With n policyholders, claim probability p, and average severity c-bar, a mean-field approximation gives expected claim count p*n and expected loss before loadings p*n*c-bar. Heterogeneity across policyholders is collapsed into book-level parameters; the prototype is a representative-agent book for pedagogy.
+
+2.2 Moral hazard and leakage (stylized)
+
+Moral hazard arises when insured parties take less care or inflate claims because the insurer bears part of the cost. The simulator does not estimate structural moral-hazard elasticities; it applies a multiplicative fraud or leakage rate f on total expected claim cost. Economically, this is a reduced-form shock to incurred losses useful for discussing why claims integrity and anti-fraud operations affect financial outcomes, not a behavioral model of reporting decisions.
+
+2.3 Expenses and surplus
+
+Operating costs are a fraction e of premium revenue. Combined ratio aggregates fraud-adjusted claims and operating costs relative to premium. When combined ratio exceeds 100%, underwriting on that metric destroys value before investment income; when below 100%, underwriting contributes positive margin on that definition.
+
+2.4 Macro stress and inflation
+
+Annual inflation g compounds severity over a 24-period simulation path via (1+g)^(i/12). Static dashboard metrics at a point in time use current average severity without inflating the headline table; charts show path dependence. This separation helps students distinguish a snapshot underwriting view from a deteriorating real-cost path.
+
+2.5 Catastrophe as correlated shock
+
+The Catastrophe Event preset raises p and c-bar simultaneously, mimicking a correlated adverse draw (e.g., weather or systemic event) that hits both frequency and severity. Such shocks are central to insurance economics discussions of tail risk, incomplete markets, and public backstops, though the prototype does not model government reinsurance or capital injections.
+
+
+------------------------------------------------------------------------
+
+
+3. Related literature
+---------------------
+
+Information and insurance markets. Classic work shows how asymmetric information can prevent efficient pooling and motivates mandatory insurance or regulated rate structures in some lines (Rothschild & Stiglitz, 1976; Wilson, 1977).
+
+Macroeconomics and claims. Inflation affects nominal claim sizes and expense ratios; insurers may lag rate revisions, creating temporary underwriting strain (Cummins & Outreville, 1987).
+
+Catastrophe and systemic risk. Large correlated losses stress insurer solvency and raise questions about risk sharing across private markets and government (Michel-Kerjan & Morlaye, 2008).
+
+Insurance pedagogy and simulation. Interactive models support active learning when structural estimation is beyond course scope; transparency of equations is essential so students do not confuse illustration with empirical calibration (Rejda & McNamara, 2020).
+
+
+------------------------------------------------------------------------
+
+
+4. Model specification
+----------------------
+
+4.1 Inputs (book level)
+
+n policyholders; claim probability p; average severity c-bar; fraud rate f (percent load on claim cost); premium pi per policyholder; operating cost ratio e (percent of premium revenue); annual inflation g; investment return r; policy horizon T in years; volatility for chart noise only.
+
+4.2 Static accounting (dashboard)
+
+Expected claims = p * n
+Fraud-adjusted claims = p * n * c-bar * (1 + f/100)
+Premium revenue = pi * n
+Operating costs = Premium revenue * (e/100)
+Investment income = Premium revenue * (r/100) * T  [stylized float return]
+Profit = Premium revenue + Investment income - Fraud-adjusted claims - Operating costs
+Loss ratio = Fraud-adjusted claims / Premium revenue
+Combined ratio = (Fraud-adjusted claims + Operating costs) / Premium revenue
+
+4.3 Dynamic path (charts)
+
+Over 24 periods, severity scales with inflation; a bounded random multiplier perturbs claims by volatility tier. Premium and expense dollars are held fixed from current sliders, so the exercise is partial equilibrium: no rate revision, no exit, no entry.
+
+4.4 Premium for target combined ratio
+
+Given fixed claims C and expense ratio e', premium pi* = C / (n * (tau - e')) achieves combined ratio tau when tau > e'. If expenses alone exceed tau, no finite premium solves the target—a useful classroom demonstration of infeasible pricing constraints.
+
+
+------------------------------------------------------------------------
+
+
+5. Implementation overview
+--------------------------
+
+  Component          | Location                    | Role
+  User interface     | src/App.tsx, components/    | Sliders, metrics, charts
+  Core logic         | src/lib/calculations.ts     | Deterministic metrics and simulation path
+  Scenarios          | src/lib/scenarios.ts        | defaultParams and scenarioPresets
+  Documentation      | GUIDE.md, PAPER.md          | Formulas and paper companion
+
+The application runs entirely in the browser (React, TypeScript, Vite). Export JSON freezes parameters and outputs for reproducibility.
+
+
+------------------------------------------------------------------------
+
+
+6. Illustrative analysis
+------------------------
+
+6.1 Baseline (favorable underwriting on static metrics)
+
+p = 8%, c-bar = 4,200, f = 4%, e = 18%, pi = 580, n = 5,000, T = 1 year:
+Combined ratio 78.3%; profit approximately $746,800. The book appears sustainable at posted premium.
+
+6.2 Normal Market preset
+
+Lower p and c-bar, lower f, slightly higher investment return:
+Combined ratio 67.7%; profit approximately $1,066,500. Illustrates surplus extraction when loss experience improves holding premium fixed—a static rent to the insurer that would attract entry or rate cuts in a competitive model not present here.
+
+6.3 High Inflation preset
+
+Higher c-bar, higher e, lower r:
+Combined ratio 90.9%; profit approximately $352,200. Shows gradual margin compression from cost inflation and expense pressure without a full catastrophe.
+
+6.4 High Fraud preset
+
+Higher p, c-bar, and f:
+Combined ratio 97.6%; profit approximately $185,500. Leakage and frequency jointly erode surplus; the economy moves toward break-even underwriting on the combined ratio metric.
+
+6.5 Catastrophe Event preset
+
+p = 22%, c-bar = 12,000:
+Combined ratio above 500%; large negative profit. Correlated shock overwhelms premium at unchanged pi, echoing why tail events motivate reinsurance, capital requirements, and sometimes public intervention.
+
+6.6 Target premium for 95% combined ratio (baseline claims)
+
+pi* approximately 453.82 versus baseline pi = 580. Holding claims fixed, lowering premium toward actuarial-target combined ratio illustrates rate adequacy debates; in practice, regulatory filing and demand constrain adjustments.
+
+
+------------------------------------------------------------------------
+
+
+7. Policy implications, limitations, and ethics
+-----------------------------------------------
+
+Partial equilibrium. The simulator holds premium and book size fixed when shocks hit. It does not model consumer response to price changes, insurer exit, reinsurance pricing, or government pools.
+
+Welfare. Without estimated demand curves or heterogeneous types, welfare comparisons across scenarios are qualitative only.
+
+Fraud parameter. Treating fraud as a slider is pedagogically convenient but must not be mapped to real demographic groups. Classroom use should emphasize institutional anti-fraud systems and data ethics.
+
+Data. Results are internally consistent with the model's algebra, not calibrated to national loss triangles or statutory filings.
+
+Governance. Production insurers require reserving, capital modeling, and regulatory reporting far beyond this prototype (Rejda & McNamara, 2020).
+
+
+------------------------------------------------------------------------
+
+
+8. Conclusion
+-------------
+
+The Insurance Company Simulator separates transparent accounting identities from narrative economic interpretation. For students of economics, it makes comparative statics on frequency, severity, leakage, inflation, and catastrophe tangible through loss and combined ratios and profit paths. The main lesson is that market performance indicators respond sharply to correlated tail shocks and more gradually to expense and inflation pressure when premiums are sticky. Connecting this tool to full insurance economics requires embedding demand, information, and regulation—extensions left to future work with richer data and structural models.
+
+
+------------------------------------------------------------------------
+
+
+References
+----------
+
+Arrow, K. J. (1963). Uncertainty and the welfare economics of medical care. American Economic Review, 53(5), 941-973.
+
+Cummins, J. D., & Outreville, J. F. (1987). An international analysis of underwriting cycles in property-liability insurance. Journal of Risk and Insurance, 54(2), 246-262.
+
+Michel-Kerjan, E., & Morlaye, F. (2008). Extreme events, global warming and insurance-linked securities: How to cover the costs. Geneva Papers on Risk and Insurance, 33(1), 115-132.
+
+Rejda, G. E., & McNamara, M. J. (2020). Principles of Risk Management and Insurance (14th ed.). Pearson.
+
+Rothschild, M., & Stiglitz, J. E. (1976). Equilibrium in competitive insurance markets: An essay on the economics of imperfect information. Quarterly Journal of Economics, 90(4), 629-649.
+
+Wilson, C. (1977). A model of insurance markets with incomplete information. Journal of Economic Theory, 16(2), 167-207.
+
+Zeckhauser, R. (1970). Medical insurance: A case study of the tradeoff between risk spreading and appropriate incentives. Journal of Economic Theory, 2(1), 10-26.
+
+
+------------------------------------------------------------------------
+
+
+Appendix A. Default and scenario parameters
+-------------------------------------------
+
+See src/lib/scenarios.ts: baseline 8% claim probability, $4,200 severity, 5,000 policyholders, $580 premium, 18% operating cost, 4% fraud, 2.5% inflation, 4% investment return. Presets: Normal Market, High Inflation, High Fraud, Catastrophe Event (documented in GUIDE.md and PAPER.md).
+
+
+------------------------------------------------------------------------
+
+
+Appendix B. Reproducibility
+---------------------------
+
+1. Clone or obtain the Insurance Company Simulator repository.
+2. Run npm install and npm run dev per GUIDE.md.
+3. Apply each scenario preset; export JSON for appendix tables.
+4. Replace bracketed author/institution fields; attach figures referenced in Section 6.
+
+
+------------------------------------------------------------------------
+
+
+Appendix C. Disclosure
+----------------------
+
+The author has no financial interest in the software. The prototype is for education and demonstration only and is not insurance advice, an offer of coverage, or empirical evidence about a real insurance market.
+
+
+------------------------------------------------------------------------
+
+End of thesis draft.

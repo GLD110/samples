@@ -1,0 +1,460 @@
+================================================================================
+MASTER'S THESIS — ECONOMICS
+================================================================================
+
+Title:
+  Interactive Visualization of Currency Stability Dynamics in Open Economies:
+  A Browser-Based Macro Sandbox for Policy Literacy
+
+Author:
+  [Candidate Name]
+
+Degree:
+  Master of Science in Economics
+
+Institution:
+  [University Name]
+
+Department:
+  Department of Economics
+
+Supervisor:
+  [Supervisor Name]
+
+Date:
+  June 2026
+
+================================================================================
+ABSTRACT
+================================================================================
+
+Emerging and middle-income economies frequently face coupled pressures on
+exchange rates, inflation, foreign reserves, and domestic currency use. Yet
+undergraduate and professional audiences often struggle to internalize how
+policy levers interact over time because conventional textbooks present static
+diagrams and isolated models. This thesis develops and evaluates a client-side
+"3D Currency Stability Simulator": a monthly discrete-time macro sandbox whose
+state variables (inflation, exchange rate, dollarization, reserves, trust,
+and a composite stability score) evolve deterministically from six normalized
+policy controls. The contribution is not econometric forecasting but pedagogical
+and communicative: linking reduced-form macro relationships to an immersive
+three-dimensional city metaphor in which building scale, particle flows, import
+networks, and crisis visuals encode macro stress.
+
+The economic model is intentionally illustrative. Each simulated month updates
+FX pressure from import dependence, inflation, USD preference, intervention,
+and reserve weakness; panic amplifies depreciation and inflation feedback;
+dollarization rises with inflation and preference and falls with trust;
+reserves deplete under sustained pressure unless intervention rebuilds them.
+Five scenario presets (stable economy, emerging market stress, import crisis,
+hyperinflation spiral, currency collapse) anchor comparative experiments. The
+implementation runs entirely in the browser without external data feeds,
+supporting classroom deployment and reproducible demonstrations.
+
+The thesis argues that spatial, real-time visualization can complement
+standard open-economy macro instruction by making path dependence and policy
+trade-offs salient—particularly the tension between FX intervention and reserve
+buffers, and between money-financed deficits and inflation/dollarization
+spirals. Limitations, extensions toward empirical calibration, and ethical
+uses in policy communication are discussed.
+
+Keywords: open-economy macroeconomics, currency crisis, dollarization, FX
+intervention, inflation dynamics, economic education, interactive simulation
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+1. Introduction
+2. Literature and Conceptual Framework
+3. Model Specification and Economic Interpretation
+4. Visualization Design as Economic Narrative
+5. Implementation Architecture
+6. Scenario Analysis and Pedagogical Use Cases
+7. Evaluation, Limitations, and Extensions
+8. Conclusion
+References
+Appendix A: State Variables and Control Mapping
+Appendix B: Monthly Update Equations (Reduced Form)
+
+================================================================================
+1. INTRODUCTION
+================================================================================
+
+1.1 Motivation
+
+Currency instability in open economies rarely manifests as a single shock.
+Instead, governments, firms, and households confront interacting forces:
+imported inflation when the exchange rate weakens, declining confidence in
+local money, pressure to invoice and save in foreign currency, and finite FX
+reserves that constrain official intervention. Standard macro curricula cover
+these themes through the Mundell–Fleming framework, balance-of-payments
+crises, and models of dollarization and hysteresis, yet students often treat
+each topic in isolation.
+
+Interactive simulation can restore the temporal structure of macro adjustment.
+When learners adjust "money printing," "import dependency," or "trust in local
+currency" and observe months unfold, they encounter complementarities and
+feedback that static figures understate. This project embeds such a simulation
+in a three-dimensional environment so that macro variables have immediate visual
+correlates—city height for GDP strength, blue versus green particles for USD
+versus local currency use, thick import lines for trade exposure, fog and camera
+shake for systemic stress.
+
+1.2 Research Questions
+
+RQ1: Can a reduced-form monthly macro sandbox capture qualitatively plausible
+     currency-stability dynamics across a range of emerging-market stress
+     scenarios?
+
+RQ2: Does coupling the sandbox to spatial visualization improve comprehension
+     of policy trade-offs compared with numeric dashboards alone?
+
+RQ3: What are the boundaries of illustrative simulation for economics
+     instruction and public communication?
+
+1.3 Contributions
+
+- A documented, open, client-side macro sandbox with transparent update rules.
+- A mapping from macro state to visual encodings grounded in economic metaphor.
+- Scenario presets that span stable equilibria through near-total dollarization.
+- A critical discussion of illustrative models versus structural estimation.
+
+1.4 Thesis Structure
+
+Chapter 2 situates the work in currency-crisis and dollarization literature.
+Chapter 3 presents the economic model. Chapter 4 explains visualization as
+narrative. Chapter 5 describes software architecture. Chapter 6 discusses
+scenarios. Chapter 7 addresses evaluation and limits. Chapter 8 concludes.
+
+================================================================================
+2. LITERATURE AND CONCEPTUAL FRAMEWORK
+================================================================================
+
+2.1 Open-Economy Macro and Crises
+
+The first-generation balance-of-payments crisis literature (Krugman, 1979;
+Flood and Garber, 1984) emphasizes inconsistent fiscal/monetary policy and
+exhaustible reserves. Second-generation models (Obstfeld, 1994) add multiple
+equilibria and self-fulfilling expectations. While the simulator does not
+estimate structural parameters, it incorporates reserve depletion, FX pressure,
+and depreciation—themes consistent with crisis narratives in emerging markets.
+
+2.2 Inflation, Pass-Through, and Import Dependence
+
+High import shares amplify exchange-rate pass-through to domestic prices. The
+simulator's "imported inflation" term scales with import dependency and the
+gap between current and anchor exchange rates, modulated by intervention.
+This aligns with reduced-form evidence that pass-through rises with openness
+and falls with credible stabilization (Burstein and Gopinath, 2014).
+
+2.3 Dollarization and Currency Substitution
+
+Currency substitution—using foreign money for transactions and store of value—
+can persist after stabilization (Calvo and Vegh, 1992; Guidotti and Rodriguez,
+1992). The model's USD usage evolves with inflation, USD preference, panic, and
+trust in the local currency, capturing a stylized substitution dynamic without
+household portfolio optimization.
+
+2.4 Trust, Institutions, and Macro Stability
+
+Trust in local currency is treated as a slow-moving social/state variable eroded
+by inflation, FX weakness, and panic, and supported by policy credibility
+proxied through the "trust in local" control. This echoes institutional
+accounts of monetary legitimacy without modeling explicit game-theoretic
+signaling.
+
+2.5 Visualization in Economics Education
+
+Research on simulation-based learning suggests active experimentation improves
+retention of dynamic systems (Witt, 2003; Goffe and Sosin, 2005). Immersive
+visualization may further leverage spatial cognition, though evidence specific
+to 3D macro tools remains limited—motivating the evaluative stance in Chapter 7.
+
+================================================================================
+3. MODEL SPECIFICATION AND ECONOMIC INTERPRETATION
+================================================================================
+
+3.1 Time Structure and State Vector
+
+Time is discrete with unit period "one month." State at month t:
+
+  - inflation (annualized decimal)
+  - exchangeRate (units per USD anchor; baseline 1)
+  - usdUsage, localUsage (shares in [0,1])
+  - fxReserves (normalized buffer)
+  - trust (confidence in local currency)
+  - fxPressure (composite stress index)
+  - stabilityScore (0–100 composite welfare/policy indicator)
+  - gdpIndex (visual output; stylized activity index)
+
+Controls (all normalized 0–1) represent policy and structural conditions:
+
+  - importDependency
+  - moneyPrinting (fiscal/monetary financing pressure)
+  - fxIntervention (official market support)
+  - trustInLocal (credibility/communication/policy backing)
+  - usdPreference (structural bias toward USD)
+  - panicSensitivity (behavioral amplification of stress)
+
+3.2 FX Pressure
+
+FX pressure aggregates openness to imports, inflation, USD preference,
+intervention (negative), and reserve weakness. It functions as a sufficient
+statistic for near-term depreciation risk in the reduced form.
+
+3.3 Panic and Expectations
+
+Panic rises with FX pressure and inflation, scaled by panic sensitivity. It
+feeds depreciation and inflation, modeling procyclical expectation shocks
+without an explicit survey-expectations block.
+
+3.4 Exchange Rate Dynamics
+
+Depreciation is proportional to excess pressure above a threshold plus panic.
+A floor prevents numerical collapse; economically, this is a numerical safeguard
+rather than a long-run purchasing-power-parity anchor.
+
+3.5 Inflation Dynamics
+
+Inflation updates via: (i) money printing with state-dependent acceleration;
+(ii) imported inflation; (iii) panic feedback; (iv) partial offset from
+intervention (interpreted as coordinated stabilization credibility or subsidized
+energy imports—kept deliberately reduced-form).
+
+3.6 Dollarization
+
+USD share increases with inflation, preference, and panic; decreases with
+trust in local. Complement local usage = 1 - usdUsage.
+
+3.7 Reserves and Intervention
+
+Reserves fall when pressure exceeds a buffer threshold; intervention adds
+reserves but effectiveness is damped when reserves are already low (implemented
+via pressure and depreciation interactions). Large depreciations trigger extra
+reserve loss scaled by import dependency—capturing import-bill and roll-over
+stress.
+
+3.8 Stability and GDP Index
+
+Stability score penalizes inflation, FX pressure, dollarization, low trust, and
+rewards reserves. GDP index co-moves for visualization; it is not national
+accounts GDP.
+
+3.9 Equilibrium Concepts
+
+The system is generally non-stationary under fixed controls: trajectories may
+drift toward high-inflation, high-dollarization regions or remain in moderate
+bands depending on parameters. Multiple "qualitative equilibria" appear as
+attractor-like regions in scenario presets rather than formal bifurcation
+analysis.
+
+================================================================================
+4. VISUALIZATION DESIGN AS ECONOMIC NARRATIVE
+================================================================================
+
+4.1 City as Aggregate Activity
+
+Buildings represent stylized sectors; height tracks gdpIndex, color/glow
+reflect stability and inflation, lean reflects FX pressure, flicker reflects
+inflation volatility. This encodes Okun-type intuition: macro instability
+correlates with activity loss.
+
+4.2 Particles as Monetary Circulation
+
+Green particles: local currency flows. Blue particles: USD flows. Mix shifts
+with dollarization; chaos rises with inflation and panic—making substitution
+visible.
+
+4.3 Import Network
+
+Peripheral nodes and lines into the center visualize trade dependence; line
+thickness scales with import dependency. Under stress, color shifts signal
+external vulnerability.
+
+4.4 Crisis Layer
+
+Fog, camera shake, and heat distortion communicate systemic risk without
+replacing quantitative HUD metrics (month, inflation, FX, reserves, trust,
+stability).
+
+4.5 Pedagogical Principle
+
+Every visual channel maps to a named economic state variable documented in the
+user guide, preserving analytical rigor while supporting intuitive exploration.
+
+================================================================================
+5. IMPLEMENTATION ARCHITECTURE
+================================================================================
+
+5.1 Client-Only Execution
+
+The application uses a Vite-hosted React front end with Three.js/React Three
+Fiber for rendering. Economic updates occur in tickSimulation (simulation.ts)
+invoked monthly by a clock component or manual step. Zustand stores state and
+history for sparkline analytics.
+
+5.2 Determinism and Reproducibility
+
+Given initial state and controls, paths are deterministic—useful for classroom
+demonstrations and scripted scenarios.
+
+5.3 Extensibility
+
+Researchers may recalibrate coefficients, add fiscal blocks, or export history
+for offline plotting. No proprietary data dependencies impede replication.
+
+================================================================================
+6. SCENARIO ANALYSIS AND PEDAGOGICAL USE CASES
+================================================================================
+
+6.1 Preset Scenarios
+
+(1) Stable Economy: low stress, high trust and reserves.
+(2) Emerging Market Stress: moderate inflation and FX pressure.
+(3) Import Crisis: high pass-through, weakening buffers.
+(4) Hyperinflation Spiral: extreme printing and panic.
+(5) Currency Collapse: near-complete dollarization and reserve exhaustion.
+
+6.2 Classroom Exercises
+
+- Hold intervention constant; raise import dependency and document reserve paths.
+- Compare money printing shocks under high versus low trustInLocal.
+- Contrast panic sensitivity in otherwise identical economies (multiple-equilibria
+  intuition).
+- Reset and replicate preset paths for discussion of early warning indicators.
+
+6.3 Policy Communication
+
+The tool can illustrate trade-offs in public forums when accompanied by explicit
+disclaimers that coefficients are illustrative, not estimated from national data.
+
+================================================================================
+7. EVALUATION, LIMITATIONS, AND EXTENSIONS
+================================================================================
+
+7.1 Limitations
+
+- Not a forecasting model; no econometric identification.
+- Monthly steps abstract intra-month volatility and policy announcement effects.
+- No explicit external debt, default, or banking sector.
+- Parameters are tuned for pedagogical clarity, not fit to a specific country.
+- 3D visuals may distract some users; accessibility requires text equivalents
+  (HUD and analytics panel partially address this).
+
+7.2 Proposed Empirical Extensions
+
+- Calibrate pass-through and intervention coefficients to SVAR/event studies.
+- Feed initial states from World Bank/IMF series (reserves months of imports).
+- Add welfare metrics (consumer surplus proxies, Gini-neutral assumptions).
+
+7.3 Evaluation Design (Future Work)
+
+Pre/post tests on identifying correct policy responses to reserve depletion;
+A/B comparison of 3D versus tabular UI; expert review by development economists.
+
+================================================================================
+8. CONCLUSION
+================================================================================
+
+This thesis presents an economics-oriented account of a 3D currency stability
+simulator that makes open-economy feedback loops tangible. By documenting the
+reduced-form model, visual encodings, and scenario library, it supports
+reproducible teaching and critical engagement with macro policy under stress.
+The central claim is modest but actionable: temporal, interactive, and spatially
+encoded macro models can improve policy literacy when their illustrative nature
+is transparent. Future work should pair the interface with empirical calibration
+and rigorous learning assessment.
+
+================================================================================
+REFERENCES
+================================================================================
+
+Burstein, A., and Gopinath, G. (2014). International prices and exchange rates.
+  In Handbook of International Economics, Vol. 4. Elsevier.
+
+Calvo, G. A., and Vegh, C. A. (1992). Currency substitution in developing
+  countries. IMF Working Paper.
+
+Flood, R. P., and Garber, P. M. (1984). Collapsing exchange-rate regimes.
+  Journal of International Economics, 17(1–2), 1–13.
+
+Guidotti, P. E., and Rodriguez, C. A. (1992). Dollarization in Latin America.
+  IMF Staff Papers, 39(3), 646–667.
+
+Goffe, W. L., and Sosin, K. (2005). Teaching with technology. International
+  Review of Economics Education.
+
+Krugman, P. (1979). A model of balance-of-payments crises. Journal of Money,
+  Credit and Banking, 11(3), 311–325.
+
+Obstfeld, M. (1994). The logic of currency crises. NBER Working Paper 4640.
+
+Witt, J. (2003). Interactive computer simulations in economics education.
+  Journal of Economic Education.
+
+================================================================================
+APPENDIX A: STATE VARIABLES AND CONTROL MAPPING
+================================================================================
+
+State (EconomicState):
+  month, inflation, exchangeRate, usdUsage, localUsage, fxReserves, trust,
+  fxPressure, stabilityScore, gdpIndex
+
+Controls (SimulationControls):
+  importDependency, moneyPrinting, fxIntervention, trustInLocal,
+  usdPreference, panicSensitivity
+
+Default initial conditions (createInitialState):
+  inflation 3.5%, exchangeRate 1, usdUsage 18%, reserves 68%, trust 0.7,
+  stabilityScore 82, gdpIndex 0.92
+
+================================================================================
+APPENDIX B: MONTHLY UPDATE EQUATIONS (REDUC FORM)
+================================================================================
+
+Let controls and state be as implemented in tickSimulation:
+
+FX pressure:
+  pressureRaw = 0.38*importDependency + 0.22*min(inflation,3) + 0.24*usdPreference
+                  - 0.5*fxIntervention + 0.12*(1 - fxReserves)
+  fxPressure = clamp01(pressureRaw)
+
+Panic:
+  panicBase = 0.55*fxPressure + min(inflation/2, 0.45)*(0.4 + 0.4*panicSensitivity)
+  panic = clamp01(panicBase * (0.5 + 0.5*panicSensitivity))
+
+Exchange rate (depreciation if pressure high):
+  erStress = (fxPressure - 0.25)*0.055 + panic*0.02
+  exchangeRate <- max(0.15, exchangeRate * (1 + erStress))
+
+Imported inflation:
+  importedInflation = importDependency * max(0, exchangeRate - 1) * 0.08
+                      * (1 - 0.4*fxIntervention)
+
+Inflation:
+  inflation += moneyPrinting*0.045*(1 + 0.15*inflation)
+  inflation += importedInflation + panic*panicSensitivity*0.025
+  inflation -= fxIntervention*0.012
+  inflation <- max(0.002, inflation)
+
+USD usage:
+  usdUsage += inflation*0.04*usdPreference + (1 - trustInLocal)*0.018 + panic*0.035
+  usdUsage -= trustInLocal*0.008
+  usdUsage <- clamp(usdUsage, 0.02, 0.98)
+
+Reserves:
+  fxReserves -= max(0, fxPressure - 0.28)*0.022
+  fxReserves += fxIntervention*0.028
+  if depreciation > 8% in one month: fxReserves -= 0.015*importDependency
+
+Trust:
+  trust <- 0.88*trust + 0.12*trustInLocal - 0.06*inflation
+           - max(0, exchangeRate - 1.2)*0.025 - 0.04*panic
+
+Stability score and GDP index: composite functions of inflation, pressure,
+dollarization, trust, and reserves (see source for coefficients).
+
+================================================================================
+END OF DOCUMENT
+================================================================================

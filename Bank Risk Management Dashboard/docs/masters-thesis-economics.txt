@@ -1,0 +1,489 @@
+================================================================================
+                    MASTER'S THESIS IN ECONOMICS
+================================================================================
+
+TITLE:
+  Financial Intermediation, Liquidity Transformation, and Macro-Stress
+  Propagation: A Pedagogical Interactive Model
+
+SUBTITLE:
+  Accompanying software artifact: Bank Risk Management Dashboard
+
+DEGREE PROGRAMME:
+  Master of Science in Economics (template — replace with your institution)
+
+AUTHOR:
+  [Your name]
+
+SUPERVISOR:
+  [Supervisor name]
+
+INSTITUTION:
+  [University name]
+
+DATE:
+  June 2026
+
+================================================================================
+                              ABSTRACT
+================================================================================
+
+Commercial banks occupy a central role in modern economies as institutions that
+transform short-term, liquid liabilities into longer-term, illiquid assets.
+That transformation generates credit risk, liquidity risk, and interest-rate
+sensitivity simultaneously. After the global financial crisis of 2007–2009,
+macro-prudential policy and stress testing became standard tools for
+understanding how adverse macroeconomic scenarios propagate through the banking
+sector. Yet students often encounter these ideas as disconnected formulas
+rather than as an integrated economic problem.
+
+This thesis develops and documents a browser-based pedagogical artifact—the
+Bank Risk Management Dashboard—that makes the joint operation of three stylized
+risk channels visible in real time. The model encodes expected credit loss from
+portfolio default and recovery assumptions, a deposit-withdrawal liquidity
+stress scenario with a simplified bank-run indicator, and a duration-based
+approximation of interest-rate loss. Macro-style stress toggles (recession,
+bank run, rate shock) adjust inputs before recomputation, illustrating how
+policy-relevant scenarios are layered assumptions rather than forecasts. An
+optional segment-level "AI Credit Default Engine" uses a transparent linear
+scorecard and logistic link to contrast top-down portfolio default rates with
+bottom-up borrower heterogeneity—a tension familiar in institutional economics
+and credit allocation.
+
+The contribution is primarily pedagogical and interpretive: the dashboard is
+not a regulatory reporting system, but a tool for teaching how financial
+intermediation, liquidity fragility, and macro shocks interact at a bank. The
+thesis situates the artifact in theories of intermediation, deposit insurance
+and run dynamics, and post-crisis stress-testing practice, specifies the
+economic structure of the simulation, reports illustrative scenarios, and
+discusses limitations for classroom and policy literacy.
+
+Keywords: financial intermediation; banking economics; liquidity risk; credit
+risk; interest-rate risk; stress testing; macro-prudential policy; financial
+education; interactive simulation
+
+================================================================================
+                         TABLE OF CONTENTS
+================================================================================
+
+  1. Introduction
+  2. Literature and economic context
+     2.1 Financial intermediation and maturity transformation
+     2.2 Liquidity, runs, and depositor coordination
+     2.3 Credit cycles and macroeconomic stress
+     2.4 Interest rates, monetary policy, and bank balance sheets
+     2.5 Stress testing as economic scenario analysis
+  3. Theoretical framework and model design
+     3.1 Economic narrative of the dashboard
+     3.2 State variables and stress adjustments
+     3.3 Credit module as expected loss
+     3.4 Liquidity module and run semantics
+     3.5 Market module and rate shocks
+     3.6 Aggregate exposure and composite risk score
+     3.7 Heterogeneous borrowers and the scorecard extension
+  4. Software artifact and methodology
+  5. Illustrative scenarios and economic interpretation
+  6. Policy implications, limitations, and classroom use
+  7. Conclusion
+  References
+  Appendix A: Symbol-to-label mapping
+  Appendix B: Artifact file locations
+
+================================================================================
+                           1. INTRODUCTION
+================================================================================
+
+Banks are not mere passive holders of deposits; they are economic institutions
+that allocate credit, provide payment services, and bear risks arising from
+maturity and liquidity mismatch. From an economics perspective, the relevant
+questions include: Why do banks exist? How does intermediation affect welfare
+and growth? Under what conditions can solvent institutions fail because of
+liquidity panics? How do macroeconomic downturns raise default rates and
+tighten funding conditions at the same time?
+
+Standard graduate curricula address these topics through models of asymmetric
+information (adverse selection and moral hazard in credit markets), models of
+bank runs (strategic withdrawal when others withdraw), and empirical accounts
+of crises. Regulatory frameworks such as Basel III translate economic concerns
+into detailed liquidity and capital rules. For many students, however, the
+link between abstract theory and balance-sheet mechanics remains weak.
+
+This thesis accompanies a software artifact designed to narrow that gap. The
+Bank Risk Management Dashboard is a single-page web application (React,
+TypeScript, Vite) with no backend: users adjust balance-sheet-style inputs and
+observe immediate updates to credit loss, liquidity shortfalls, rate-sensitive
+losses, and composite indicators. Stress modes operationalize stylized
+macro scenarios—recession amplifies default rates, bank run doubles withdrawal
+shocks, rate shock adds two percentage points to the assumed rate change—so
+students can see how scenario assumptions propagate through multiple channels.
+
+Research questions addressed in this thesis:
+
+  (1) How can a minimal, formula-transparent model represent the joint
+      economic pressures on a commercial bank under credit, liquidity, and
+      rate stress?
+
+  (2) What does a simplified stress-testing interface teach about the
+      difference between base-case balance sheets and adverse macro scenarios?
+
+  (3) How does introducing heterogeneous borrower segments (via a fixed
+      scorecard) clarify the economic distinction between aggregate default
+      rates and micro-level default probabilities?
+
+The remainder of the thesis is organized as follows. Chapter 2 reviews
+economic and policy context. Chapter 3 presents the model. Chapter 4 describes
+the artifact and methods. Chapter 5 reports scenarios. Chapter 6 discusses
+limitations and teaching use. Chapter 7 concludes.
+
+================================================================================
+              2. LITERATURE AND ECONOMIC CONTEXT
+================================================================================
+
+2.1 Financial intermediation and maturity transformation
+----------------------------------------------------------
+
+A large literature explains why intermediaries arise when direct lending is
+costly due to information asymmetries. Banks screen and monitor borrowers,
+diversify loan portfolios, and offer liquid claims to depositors while holding
+illiquid assets (Greenbaum and Thakor; Saunders and Cornett). Maturity
+transformation—the use of short-term funding for longer-term lending—is
+socially valuable when it supports investment, but it embeds structural
+fragility: not every asset can be liquidated quickly without loss.
+
+The dashboard abstracts a bank with total loans L, total deposits D, and cash
+reserves C. It does not enforce the accounting identity assets = liabilities +
+equity; instead it treats L, D, and C as independent teaching inputs. That
+omission is deliberate: the focus is risk metrics under user-chosen scenarios,
+not full balance-sheet consistency. Extensions discussed in the conclusion
+could add a minimal equity buffer and tie cash to residual assets.
+
+2.2 Liquidity, runs, and depositor coordination
+------------------------------------------------
+
+Diamond-Dybvig-style models show that even healthy banks can be destabilized
+when depositors coordinate on withdrawals. In practice, deposit insurance,
+lender-of-last-resort facilities, and liquidity regulation (e.g., Liquidity
+Coverage Ratio under Basel III) mitigate but do not eliminate run risk.
+
+The dashboard's liquidity module computes:
+
+  Liquidity ratio = Cash reserves / Total deposits
+
+  Withdrawals = Total deposits x (Withdrawal shock percent / 100)
+
+  Remaining cash = Cash reserves - Withdrawals
+
+A "bank run" warning appears when remaining cash is negative. This is a
+deliberate simplification of inability to meet immediate outflows—it captures
+the economic intuition of a liquidity shortfall without modeling queueing,
+fire sales, or interbank markets. The bank-run stress mode doubles the
+withdrawal shock parameter, analogizing to panic-driven acceleration of
+outflows rather than a calibrated historical run.
+
+2.3 Credit cycles and macroeconomic stress
+-------------------------------------------
+
+Credit risk rises in recessions as unemployment increases, collateral values
+fall, and repayment capacity weakens. Macro stress tests applied by supervisors
+after 2008 embed adverse GDP paths, unemployment spikes, and property price
+declines into projections of bank losses.
+
+The classic credit module uses a pedagogical expected loss formula:
+
+  EL = Loans x (Default rate / 100) x (1 - Recovery rate / 100)
+
+Interpreting default rate as probability of default (PD) and (1 - recovery) as
+loss given default (LGD) links the dashboard to standard credit risk language.
+Recession stress multiplies the default rate by 1.8 before calculation—a
+teaching knob, not an econometric estimate. Risk bands (low / medium / high)
+partition default rates at 2% and 5%, offering an ordinal signal akin to
+portfolio quality tiers without a full rating migration model.
+
+2.4 Interest rates, monetary policy, and bank balance sheets
+------------------------------------------------------------
+
+When central banks tighten policy, market yields rise and the present value of
+fixed-rate assets falls. Banks with rate-sensitive securities and loan books
+face market risk even when credit quality is unchanged. A first-order
+approximation uses modified duration:
+
+  Change in value ≈ -Duration x Portfolio value x Change in yield
+
+The dashboard reports loss as a positive magnitude:
+
+  Market loss = Portfolio size x Duration x (Rate change / 100)
+
+Rate shock stress adds two percentage points to the rate change input. A
+supplementary chart plots loss for parallel shocks of +1%, +2%, +3%, and +4%,
+illustrating linear scaling without convexity—adequate for introductory
+discussion, insufficient for options-embedded securities.
+
+2.5 Stress testing as economic scenario analysis
+------------------------------------------------
+
+Stress testing is not forecasting; it is conditional analysis. Given scenario S,
+what happens to metrics M? Supervisors and banks debate scenario plausibility,
+correlation across risks, and dynamic balance-sheet responses. The dashboard
+implements three independent binary stress flags that adjust inputs before a
+single-period recomputation. Correlation between credit, liquidity, and rates
+is left to the user: toggling multiple stresses at once mimics a compound
+macro shock (e.g., recession plus run plus rate spike) without imposing a
+joint distribution.
+
+================================================================================
+           3. THEORETICAL FRAMEWORK AND MODEL DESIGN
+================================================================================
+
+3.1 Economic narrative of the dashboard
+---------------------------------------
+
+Imagine a regional bank facing three pressures: borrowers default more often,
+depositors withdraw faster, and interest rates rise. Management and regulators
+care about expected credit loss, whether cash covers stressed withdrawals, and
+mark-to-market or duration-based losses on the rate-sensitive book. A
+composite "total risk exposure" sums credit loss, market loss, and any
+liquidity shortfall (only negative remaining cash adds a penalty). A heuristic
+risk score (0–100) weights default rate, liquidity ratio, and rate change for
+dashboard readability—not for binding capital requirements.
+
+3.2 State variables and stress adjustments
+------------------------------------------
+
+Base inputs:
+
+  L   = Total loans (credit exposure)
+  d   = Default rate (percent)
+  rho = Recovery rate (percent)
+  D   = Total deposits
+  C   = Cash reserves
+  w   = Withdrawal shock (percent of deposits)
+  r   = Interest rate change (percentage points)
+  P   = Loan portfolio size (rate-sensitive book)
+  delta = Duration
+
+Stress indicators I_rec, I_run, I_rate (each 0 or 1) yield adjusted inputs:
+
+  d'  = 1.8 * d   if recession; else d
+  w'  = 2 * w     if bank run; else w
+  r'  = r + 2     if rate shock; else r
+
+Recovery and non-stressed inputs pass through unchanged.
+
+3.3 Credit module as expected loss
+---------------------------------
+
+  EL = L * (d'/100) * (1 - rho/100)
+
+A twelve-month default-rate series for charting adds deterministic drift and
+small random noise, clipped to [0.2%, 15%]. This series illustrates time
+variation; it is not a calibrated ARMA or macro-linked series.
+
+3.4 Liquidity module and run semantics
+--------------------------------------
+
+  lambda = C / D
+  W = D * (w'/100)
+  R = C - W
+
+Bank run flag: true if R < 0. Charts compare cash and withdrawals side by side.
+
+3.5 Market module and rate shocks
+---------------------------------
+
+  Loss_market = P * delta * (r'/100)
+
+Chart points use shocks 1%, 2%, 3%, 4% with fixed P and delta.
+
+3.6 Aggregate exposure and composite risk score
+-----------------------------------------------
+
+  T = EL + Loss_market + max(0, -R)
+
+  S = clamp(0, 100, (d'/12)*35 + (1 - lambda)*30 + (r'/10)*35)
+
+3.7 Heterogeneous borrowers and the scorecard extension
+-------------------------------------------------------
+
+Real credit allocation is heterogeneous: income, leverage, credit history, and
+employment stability vary across borrowers. Aggregate portfolio default rates
+can mask segment-level distress—a recurring theme in development and household
+finance economics.
+
+The optional AI Credit Default Engine assigns each loan segment a probability
+of default via a fixed linear score z and logistic transform:
+
+  PD_raw = 1 / (1 + exp(-z))
+
+Features include income category, debt-to-income ratio, credit score, interest
+rate, loan amount (for aggregation only), and employment stability. Weights
+are fixed for sign intuition, not estimated from data. AI recession stress
+multiplies PD by 1.3 (cap at 1); inflation shock scales the interest term;
+job market crash halves employment stability before scoring.
+
+Portfolio metrics include average PD, expected default volume, AI expected loss
+(using the same recovery as the classic module), and a toy risk-weighted asset
+sum (amount x PD x 1.2). Comparing portfolio default rate d'/100 to average PD
+illustrates top-down versus bottom-up inconsistency—a practical issue when
+macro scenarios and micro scorecards are not reconciled.
+
+================================================================================
+              4. SOFTWARE ARTIFACT AND METHODOLOGY
+================================================================================
+
+The artifact is implemented in React with TypeScript, bundled by Vite, styled
+with Tailwind CSS, and charted with Recharts. Pure functions in src/models/
+riskEngine.ts (classic engine) and src/ai/ plus src/simulation/riskEngine.ts
+(AI portfolio) separate economic logic from presentation. State lives in React
+hooks; useMemo recomputes on input changes.
+
+Methodologically, this thesis is a design-science / pedagogical contribution:
+specification of an economic narrative, formal mapping to equations,
+implementation, and scenario-based validation. No econometric estimation is
+performed. Validation consists of hand-checking numerical examples (Chapter 5)
+and transparency of formulas (export to JSON/CSV).
+
+There is no server; the model runs entirely in the browser for classroom demos
+without infrastructure. The development server may bind to 0.0.0.0 for LAN access.
+
+================================================================================
+        5. ILLUSTRATIVE SCENARIOS AND ECONOMIC INTERPRETATION
+================================================================================
+
+5.1 Baseline
+------------
+With all stress modes off, students establish a base case where remaining cash
+is non-negative and KPIs reflect entered parameters.
+
+5.2 Recession and credit loss
+-----------------------------
+Example: L = 100,000,000; d = 4%; rho = 50%.
+  EL = 100,000,000 * 0.04 * 0.5 = 2,000,000
+Recession mode: d' = 7.2%, raising EL and moving risk from medium to high.
+Economic lesson: the same loan book can imply sharply higher expected loss under
+a macro scenario without changing ex-post accounting until defaults realize.
+
+5.3 Bank run and liquidity shortfall
+------------------------------------
+Example: D = 120,000,000; C = 10,000,000; w = 15%.
+  Withdrawals = 18,000,000; Remaining cash = -8,000,000 → run warning.
+Bank run mode doubles w to 30%, deepening the shortfall. Discuss: deposit
+insurance, central bank liquidity, and asset liquidation delays—topics the
+toy model omits.
+
+5.4 Rate shock and monetary tightening
+-------------------------------------
+Example: r = 2%; P = 80,000,000; delta = 4.
+  Loss_market = 6,400,000
+Rate shock adds 2 points to r', doubling loss in this example. Link to central
+bank policy and net interest margin effects (not modeled).
+
+5.5 Compound macro stress
+-------------------------
+Students may enable recession, bank run, and rate shock together. Total exposure
+T rises across channels; the risk score S moves with d', lambda, and r'.
+Essay prompt: Are joint stresses realistic without correlation structure? How
+would a dynamic model differ?
+
+5.6 Heterogeneity and scorecard checks
+--------------------------------------
+In AI Risk Mode, raising credit score lowers segment PD; raising DTI or rate
+raises PD. Toggling AI recession scales all PDs by 1.3. Comparing classic
+portfolio default rate to average PD highlights aggregation bias relevant to
+inclusive lending and macro-prudential fairness debates.
+
+================================================================================
+     6. POLICY IMPLICATIONS, LIMITATIONS, AND CLASSROOM USE
+================================================================================
+
+Policy literacy: The dashboard supports discussion of why Basel liquidity
+ratios exist, why stress tests use adverse scenarios, and why bottom-up credit
+models may disagree with top-down portfolio rates. It does not compute capital
+ratios, resolution planning, or systemic network effects.
+
+Limitations (required for academic honesty):
+
+  1. Single-period static inputs; no multi-year macro path.
+  2. No imposed correlation structure beyond user choices.
+  3. Credit time series includes illustrative randomness on re-render.
+  4. No full Basel capital or LCR/NSFR formulas.
+  5. Scalar duration; no prepayment or basis risk.
+  6. Stress multipliers (1.8x, 2x, +2%, 1.3x PD, etc.) are arbitrary.
+  7. Scorecard weights are not estimated or back-tested.
+
+Classroom use: Verify algebra against KPIs; compare student-proposed stress
+calibrations to historical crises; pair with readings on intermediation and
+Diamond-Dybvig; use exports for audit assignments. See GUIDE.md and PAPER.md
+in the project repository.
+
+================================================================================
+                           7. CONCLUSION
+================================================================================
+
+This thesis presented an economics-oriented interpretation of the Bank Risk
+Management Dashboard—a transparent, browser-based model of credit, liquidity, and
+interest-rate stress at a commercial bank. The artifact makes maturity
+transformation risks tangible, shows how macro-style scenarios alter metrics,
+and optionally illustrates borrower heterogeneity through an auditable
+scorecard.
+
+Future work from an economics angle might add balance-sheet identities, a
+minimal interbank liquidity market, calibrated macro scenarios from historical
+recessions, or agent-based depositor behavior. For policy education, the
+current design prioritizes clarity over realism—a trade-off appropriate for
+master's-level foundations before students encounter enterprise risk systems.
+
+================================================================================
+                            REFERENCES
+================================================================================
+
+Basel Committee on Banking Supervision. Basel III: The Liquidity Coverage
+  Ratio and liquidity risk monitoring tools. Bank for International Settlements.
+
+Diamond, D. W., & Dybvig, P. H. (1983). Bank runs, deposit insurance, and
+  liquidity. Journal of Political Economy.
+
+Greenbaum, S. I., & Thakor, A. V. Contemporary Financial Intermediation.
+
+Minsky, H. Financial instability hypothesis (credit cycle literature).
+
+Saunders, A., & Cornett, M. M. Financial Institutions Management.
+
+Stiglitz, J. E., & Weiss, A. (1981). Credit rationing in markets with imperfect
+  information. American Economic Review.
+
+Course materials on macro-prudential policy, banking crises, and stress testing
+  (institution-specific).
+
+================================================================================
+                    APPENDIX A: SYMBOL MAPPING
+================================================================================
+
+  L      → Total Loans
+  d      → Default Rate (%)
+  rho    → Recovery Rate (%)
+  D      → Total Deposits
+  C      → Cash Reserves
+  w      → Withdrawal Shock (%)
+  r      → Interest Rate Change (%)
+  P      → Loan Portfolio Size
+  delta  → Duration
+
+================================================================================
+                    APPENDIX B: ARTIFACT LOCATIONS
+================================================================================
+
+  README.md              Quick start
+  GUIDE.md               Operator guide and test flows
+  PAPER.md               Technical paper (shared with finance thesis)
+  AI_MODE.md             AI Risk Mode detail
+  src/models/riskEngine.ts       Classic engine
+  src/ai/featureEngine.ts        Feature normalization
+  src/ai/defaultModel.ts         PD calculation
+  src/simulation/riskEngine.ts   AI portfolio aggregation
+  src/App.tsx                    UI entry
+
+================================================================================
+Document version: 1.0 — Economics master's thesis template.
+Accompanies the Bank Risk Management Dashboard student project.
+Replace bracketed metadata with your institution's requirements.
+================================================================================

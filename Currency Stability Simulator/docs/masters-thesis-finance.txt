@@ -1,0 +1,565 @@
+================================================================================
+                    MASTER'S THESIS — FINANCE
+================================================================================
+
+Title:
+  Financial Stability Under FX Stress: Reserve Management, Intervention, and
+  Asset Substitution in an Interactive Currency Stability Framework
+
+Author:
+  [Author Name]
+
+Institution:
+  [University / Department of Finance]
+
+Degree:
+  Master of Science in Finance (M.Sc.)
+
+Supervisor:
+  [Supervisor Name]
+
+Date:
+  June 2026
+
+================================================================================
+                              ABSTRACT
+================================================================================
+
+Financial stability in open emerging markets depends on the joint management of
+foreign-exchange risk, official reserves, policy rates, and household asset
+allocation between local and foreign currency. This thesis examines these
+interactions through the lens of the Currency Stability Simulator—an open-
+source, discrete-time financial–macro simulation built for interactive stress
+testing and pedagogy.
+
+From a finance perspective, the model treats the exchange rate as the key
+relative price of local vs. foreign money, FX pressure as a composite risk
+index, reserves and intervention as liquidity and defense capacity, and USD
+usage as a measure of asset substitution (dollarization). Each monthly tick
+updates market-facing variables: exchange rate path, inflation (real return
+erosion), import cost index (corporate input shock), stability score (systemic
+risk proxy), and a four-state regime label (Stable, Weak, Crisis, Collapse).
+
+The thesis formalizes the financial interpretation of each module, maps them to
+standard concepts (FX exposure, carry/support from interest differentials,
+intervention exhaustion, flight-to-quality into USD), and presents scenario
+analysis using five calibrated presets and three shock overlays (oil spike,
+war/disruption, IMF financing). Comparative runs show that reserve adequacy
+strongly conditions intervention effectiveness; that panic sensitivity acts as
+a risk multiplier on FX demand; and that high USD preference creates structural
+hedging demand that policy rates only partially offset.
+
+The simulator is not a trading or forecasting system. Coefficients prioritize
+feedback clarity over empirical calibration. Nonetheless, the framework offers
+finance students and practitioners a compact laboratory for exploring how
+balance-sheet buffers and behavioral flight interact before systemic crisis
+thresholds are breached.
+
+Keywords: financial stability, FX risk, reserve management, currency intervention,
+dollarization, asset substitution, stress simulation, emerging markets
+
+================================================================================
+                         TABLE OF CONTENTS
+================================================================================
+
+1.  Introduction
+2.  Literature Review
+3.  Financial Interpretation of the Model
+4.  Risk Metrics and Regime Classification
+5.  Methodology and Implementation
+6.  Stress Testing and Scenario Results
+7.  Implications for Reserve and Risk Management
+8.  Limitations
+9.  Conclusion
+References
+Appendix A: Financial Mapping of Simulator Variables
+Appendix B: Shock Impact on Balance-Sheet Proxies
+
+================================================================================
+                          1. INTRODUCTION
+================================================================================
+
+1.1 Problem Statement
+
+Corporate treasurers, sovereign debt managers, and central bank reserve desks
+operate under coupled risks: spot FX moves affect imported input costs and
+foreign-currency liabilities; inflation erodes nominal returns on local-currency
+assets; households reallocate portfolios toward dollars when real returns turn
+negative or policy credibility falters. Traditional finance curricula often
+cover derivatives hedging, CAPM, and fixed-income analytics separately from
+macro FX crises, leaving a gap in understanding how macro feedback translates
+into sustained balance-sheet stress.
+
+1.2 Objectives
+
+This finance-oriented thesis aims to:
+
+  O1. Reframe the Currency Stability Simulator in financial stability language.
+
+  O2. Identify which parameters correspond to observable financial concepts
+      (FX exposure, reserve months of imports, implicit carry, substitution).
+
+  O3. Evaluate preset scenarios as stylized stress tests comparable to board-
+      level scenario planning exercises.
+
+  O4. Derive practical lessons for reserve adequacy, intervention strategy, and
+      dollarization monitoring.
+
+1.3 Research Questions
+
+  RQ1: How does effective reserve strength govern the marginal efficacy of FX
+       intervention in reducing depreciation pressure?
+
+  RQ2: What combinations of USD preference and panic sensitivity produce rapid
+       asset substitution despite moderate inflation?
+
+  RQ3: Can interest-rate support stabilize the exchange rate without triggering
+       secondary instability via import costs or fiscal stress (abstracted)?
+
+  RQ4: How do external liquidity shocks (IMF inflow vs. sanctions/outflow) alter
+       the path to Crisis or Collapse thresholds?
+
+1.4 Relation to the Economics Thesis
+
+A companion economics thesis emphasizes macro causal chains and policy credibility.
+This document emphasizes balance-sheet capacity, risk indices, intervention as
+ contingent liquidity deployment, and USD share as portfolio flight—complementary
+views of the same simulation engine (src/engine/simulation.ts).
+
+================================================================================
+                       2. LITERATURE REVIEW
+================================================================================
+
+2.1 FX Risk and Corporate Exposure
+
+Allayannis and Weston (2001) and Bartram, Brown, and Minton (2010) document
+material FX exposure for multinational and import-dependent firms. The import
+cost index in the simulator aggregates FX level and import dependency—a reduced-
+form input-cost shock index finance managers can treat like a weighted commodity
+FX beta.
+
+2.2 Official Reserves and Crisis Prevention
+
+Obstfeld, Shambaugh, and Taylor (2010) analyze reserve accumulation and crisis
+frequency. Jeanne and Rancière (2011) discuss optimal reserves vs. insurance
+costs. In the model, fxReserveStrength enters FX pressure relief, depreciation
+support, intervention scaling, and stability scoring—mirroring the multi-use role
+of reserves as liquidity backstop and confidence signal.
+
+2.3 FX Intervention Effectiveness
+
+Dominguez and Frankel (1993) and Adler et al. (2021) study when intervention
+moves the spot rate vs. when it wastes ammunition. The simulator's intervention
+term is multiplied by effective reserves, encoding diminishing credibility when
+buffers are low—a stylized exhaustion curve without explicit option-market data.
+
+2.4 Dollarization and Asset Substitution
+
+Honohan and Shi (2002) survey deposit dollarization; Ize and Levy-Yeyati (2003)
+analyze financial dedollarization policies. USD usage in the model is a one-
+dimensional proxy for household and firm shift into foreign-currency assets
+when local real returns and trust deteriorate.
+
+2.5 Systemic Risk and Early Warning
+
+Kaminsky, Lizondo, and Reinhart (1998) propose leading indicators of currency
+crises (reserve losses, real exchange rate, credit growth). The stability score
+and FX pressure index function as internal early-warning composites, analogous
+to simplified market-based stress gauges used in macroprudential dashboards.
+
+2.6 Stress Testing in Finance
+
+Regulatory and institutional stress testing (BCBS, 2009; Fed CCAR framework)
+uses scenario shocks on macro variables to evaluate loss absorption. The
+simulator's presets and discrete shocks operationalize a lightweight, interactive
+ analogue for classroom and workshop settings.
+
+================================================================================
+              3. FINANCIAL INTERPRETATION OF THE MODEL
+================================================================================
+
+3.1 Exchange Rate as Core Price
+
+State variable exchangeRate measures local currency units per one US dollar.
+Rising values imply depreciation—adverse for net importers and entities with
+USD liabilities unhedged. Initial value: 100 (normalization, not a specific
+country quote).
+
+Monthly change derives from net depreciation:
+
+  netDepreciation = max(0, pressureDepreciation − rateSupport − reserveSupport)
+
+Finance reading: FX return on local currency is approximately negative net
+depreciation; USD holders gain local-currency nominal wealth.
+
+3.2 FX Pressure as Composite FX Demand Index
+
+FX pressure (0–100) aggregates:
+
+  Pull side (demand for USD):
+    - Import dependency → trade invoicing and settlement need
+    - Inflation → negative real return on local cash
+    - USD preference → structural dollar bias
+    - Panic sensitivity → multiplier on pull components
+
+  Buffer side (supply / defense):
+    - FX intervention × effective reserves
+    - GDP strength → implicit external earning capacity
+    - Reserve strength → stock ammunition
+    - Trust → reduced precautionary USD demand
+
+Finance reading: pressure resembles a net order-flow imbalance index before
+central bank absorption.
+
+3.3 Interest Rate as Carry and Stabilization Support
+
+Higher interestRate adds rateSupport to reduce net depreciation and subtracts
+from monthly inflation (disinflation channel). It slightly slows USD adoption
+(higher local yield).
+
+Finance reading: partial offset to FX weakness via interest differential
+(carry attractiveness for local currency assets), subject to credibility limits
+not modeled explicitly.
+
+3.4 Reserves and Intervention
+
+effectiveReserveStrength = clamp(fxReserveStrength + shock bonuses, 0, 100)
+
+Intervention relief = (fxInterventionStrength / 100) × (reserves / 100) × 36
+
+Reserve support to depreciation = (reserves / 100) × 0.0022 monthly
+
+Finance reading: intervention is a contingent asset sale; effectiveness is
+ convex in reserve stock—consistent with market perceptions that empty promises
+ fail. Peg Collapse preset (high intervention, low reserves) demonstrates
+ unsustainable defense.
+
+3.5 Inflation as Real Return Erosion
+
+Inflation is displayed annualized but built from monthly flows including pass-
+through from depreciation on import basket:
+
+  importInflationPass ∝ importDependency × erMonthlyPct × trust adjustment
+
+Finance reading: unhedged import exposure creates a natural hedge shortfall
+when FX and CPI co-move—typical emerging-market risk.
+
+3.6 USD Usage as Dollarization / Asset Substitution
+
+usdUsage rises with inflation, trust gap, USD preference, FX pressure; falls with
+rates and trust. Stability score penalizes high USD share (−0.22 × usdUsage).
+
+Finance reading: rising USD share signals shrinking local-currency monetary
+base demand, harder default risk management in local currency, and potential
+liability dollarization feedback (not separately modeled).
+
+3.7 Import Cost Index
+
+importCostIndex = (exchangeRate / 100) × effectiveImportDependency
+
+Finance reading: stress index for COGS sensitivity—useful for discussing
+operating leverage and margin compression under FX shock without full financial
+statements.
+
+3.8 Stability Score as Systemic Risk Proxy
+
+  stability = 100 − 0.28×inflation − 0.22×usdUsage − 0.32×fxPressure
+              + GDP/trust/reserve rewards
+
+Bounded 0–100. Maps to board-level "traffic light" dashboards.
+
+================================================================================
+                 4. RISK METRICS AND REGIME CLASSIFICATION
+================================================================================
+
+4.1 Regime States
+
+  STABLE    — inflation ≤ ~22%, stability ≥ ~58, FX pressure ≤ ~52
+  WEAK      — intermediate deterioration
+  CRISIS    — stability < ~32, or inflation > ~55%, or FX pressure > ~78
+  COLLAPSE  — inflation > ~120%, or stability < ~12, or FX rate > 8× initial
+
+Finance interpretation: Collapse corresponds to loss of local currency as unit
+of account and store of value in model terms—analogous to market disorder and
+forced restructuring episodes.
+
+4.2 Monitoring Dashboard (Simulator UI)
+
+  - Exchange rate time series → spot stress path
+  - Inflation series → real return erosion
+  - Currency mix pie → dollarization snapshot
+  - Import cost index bars → corporate input shock
+  - Stability gauge → composite risk
+  - Status bar FX pressure → real-time pressure recomputation
+
+4.3 History Window
+
+Last 100 months retained—sufficient for medium-term stress path review
+comparable to quarterly board risk reports over ~8 years of monthly data.
+
+================================================================================
+                   5. METHODOLOGY AND IMPLEMENTATION
+================================================================================
+
+5.1 Simulation Engine
+
+TypeScript functions in src/engine/simulation.ts:
+
+  computeFxPressure(state, params, modifiers)
+  tickSimulation(state, params, modifiers) → { next, fxPressure }
+  getSystemStatus(state, fxPressure)
+  appendHistory(history, state, fxPressure)
+
+5.2 Parameters as Risk Appetite and Capacity Controls
+
+Sliders (0–100) represent normalized policy and structure settings, not literal
+percentages from national data. Finance users should treat them as stress-test
+ dials:
+
+  importDependency     → FX beta to trade channel
+  fxReserveStrength    → liquidity war chest
+  fxInterventionStrength → active defense intensity
+  interestRate         → carry / tightening
+  usdPreference        → structural hedge demand
+  panicSensitivity     → market liquidity / herding multiplier
+
+5.3 Shock Modules as Event Risk
+
+  Oil price spike      — supply shock, import intensity ↑
+  War / disruption     — trade + reserve drain narrative
+  IMF bailout          — official sector liquidity injection
+
+Shocks stack; durations count down one month per tick (aggregateModifiers).
+
+5.4 Presets as Named Stress Scenarios
+
+Defined in src/engine/presets.ts:
+
+  Stable Economy         — base case for buffer calibration
+  Emerging Market Stress — thinner liquidity, higher event risk
+  Import Crisis          — high FX beta economy
+  Hyperinflation Spiral  — fiscal dominance / monetization stress
+  Peg Collapse           — intervention vs. reserve mismatch
+
+5.5 Persistence
+
+Snapshots saved to localStorage (STORAGE_KEY in types.ts) enable reproducible
+workshop scenarios.
+
+================================================================================
+                  6. STRESS TESTING AND SCENARIO RESULTS
+================================================================================
+
+6.1 Baseline: Stable Economy
+
+Financial profile: low FX beta (import 28), strong reserves (68), moderate
+intervention, high trust. FX pressure remains subdued; exchange rate path mild;
+USD share stable near high-20s percent; stability score > 70 typical at 24 months.
+
+Lesson: adequate buffers make intervention optional rather than existential.
+
+6.2 Emerging Market Stress
+
+Reserves 38, printing elevated, panic 42. By month 12–18, FX pressure often
+crosses Weak thresholds; import cost index trends up with spot; corporate margin
+ stress narrative applies. Rate hikes (interest slider↑) reduce depreciation speed
+ but may not restore Stable if reserves continue implicit drain via support term.
+
+6.3 Import Crisis — FX Beta Dominance
+
+Import dependency 78. Small depreciation produces large import cost index moves;
+inflation pass-through reinforces FX pressure. Unhedged importers face nonlinear
+ damage—consistent with RQ1/RQ2 on vulnerability of high-beta structures.
+
+6.4 Hyperinflation Spiral — Real Return Collapse
+
+Money printing 88, rates 22, trust 28. USD usage can exceed 60% before Collapse;
+local-currency debt real value erodes rapidly in narrative terms. Demonstrates
+ limits of local-currency financing when dollarization accelerates.
+
+6.5 Peg Collapse — Intervention Exhaustion
+
+Intervention 72 with reserves 32. Intervention relief term appears high in
+isolation but reserve scaling caps effective defense; FX pressure persists;
+ eventual sharp depreciation when netDepreciation remains positive month after
+ month—resembles failed peg exits in emerging markets.
+
+6.6 Shock Overlay Results
+
+Starting Stable Economy at month 0:
+
+  Shock          | Peak FX Pressure Effect      | Financial Channel
+  ---------------|------------------------------|----------------------------------
+  Oil (6 mo)     | Moderate import index spike  | Energy/import COGS shock
+  War (8 mo)     | Strong + reserve penalty     | Sanctions/reserve runoff
+  IMF (10 mo)   | Reserve boost, inflation ↓   | Official liquidity line
+
+Combined war + pre-existing Emerging Market Stress preset often reaches Crisis
+within shock window—illustrating inadequate self-insurance.
+
+6.7 Interest Rate vs. Intervention Experiment (RQ3)
+
+Hold Emerging Market Stress preset; compare:
+
+  Case A: interestRate 55, intervention 40
+  Case B: interestRate 35, intervention 70
+
+Case B may show temporary pressure relief if reserves remain, but depletes
+ implicit reserve support faster via sustained high intervention setting without
+ replenishment (modeled only through shock modifiers). Case A slows inflation
+ and USD flight via carry but allows more spot weakness. No universal dominant
+ strategy—tradeoff between spot stability and real economy inflation/import cost.
+
+================================================================================
+            7. IMPLICATIONS FOR RESERVE AND RISK MANAGEMENT
+================================================================================
+
+7.1 Reserve Adequacy
+
+Treat fxReserveStrength as a policy target linked—in real applications—to
+imports coverage, short-term external debt, and M2 dollarizable deposits (Greenspan-
+Guidotti rule extensions). Simulations suggest reserves affect outcomes through
+ three distinct channels: direct pressure buffer, intervention scaling, and
+ stability score. Underinvestment raises simultaneous probability of Crisis
+ classification.
+
+7.2 Hedging Strategy
+
+Firms with import dependency analogous to slider > 60 should map simulator import
+ cost index paths to hedge ratios on FX forwards/options. Pass-through to CPI
+ in the model warns that spot-only hedging may be insufficient if pricing power
+ is weak (trust low → higher pass-through multiplier).
+
+7.3 Dollarization Monitoring
+
+Track usdUsage like a deposit dollarization ratio. Thresholds above ~45–50% in
+ stressed presets coincide with Weak/Crisis transitions—potential internal KPI
+ for macroprudential review.
+
+7.4 Intervention Policy
+
+Use fxInterventionStrength together with reserve slider: aggressive intervention
+ with low reserves scores poorly on sustained stability. Finance recommendation
+ aligned with literature: intervene decisively early when buffers exist, or
+ pre-communicate float/crawl exit to avoid middle strategies.
+
+7.5 Official Sector Financing Shocks
+
+IMF module shows liquidity can extend runway but does not eliminate structural
+ FX beta. Conditionality narrative maps to requiring parameter improvement
+ (lower import dependency, higher trust) for exit from Weak status.
+
+================================================================================
+                          8. LIMITATIONS
+================================================================================
+
+  - No term structure, forward points, or implied volatility
+  - No sovereign spread or CDS channel
+  - No explicit balance sheets for banks, firms, or government
+  - USD-only foreign asset; no cryptocurrency or gold substitution
+  - Linear-ish reduced forms; no fat-tail Monte Carlo
+  - Parameters not tied to market quotes or IMF WEO data
+  - Cannot price derivatives or compute hedge effectiveness numerically
+
+Extensions for finance audience: add FX forward hedge slider reducing effective
+ import pass-through; stochastic FX shocks; VaR/CVaR on import cost index;
+ sovereign default trigger linked to Collapse state.
+
+================================================================================
+                          9. CONCLUSION
+================================================================================
+
+This finance thesis reinterpreted the Currency Stability Simulator as a compact
+financial stability stress lab. Exchange rate dynamics, reserve-backed
+intervention, interest-rate carry, and USD asset substitution jointly determine
+whether the system remains Stable or escalates to Crisis and Collapse.
+
+Key finance takeaways:
+
+  1. Reserves are a multiplier on intervention credibility—not merely a stock
+     for accounting.
+
+  2. Import dependency acts as corporate and sovereign FX beta; high beta
+     economies require larger hedging and liquidity buffers.
+
+  3. Panic and USD preference convert moderate macro stress into accelerated
+     portfolio substitution—an early-warning focus for risk officers.
+
+  4. Official liquidity (IMF shock) buys time; structural parameters must move
+     for sustained rating stability analogues.
+
+The simulator complements—not replaces—empirical early-warning models and
+market-based risk systems. Its value lies in making multi-channel FX–inflation–
+dollarization feedback tangible for finance education and structured scenario
+dialogues.
+
+================================================================================
+                           REFERENCES
+================================================================================
+
+Adler, G., et al. (2021). FX intervention: A database of public announcements.
+  IMF Working Paper.
+
+Allayannis, G., and Weston, J. P. (2001). The use of foreign currency derivatives
+  and firm market value. Review of Financial Studies, 14(1), 243–276.
+
+Bartram, S. M., Brown, G. W., and Minton, B. A. (2010). Resolving the exposure
+  puzzle. Journal of Financial Economics, 95(2), 148–173.
+
+BCBS. (2009). Principles for sound stress testing practices and supervision.
+  Bank for International Settlements.
+
+Dominguez, K. M., and Frankel, J. A. (1993). Does foreign-exchange intervention
+  matter? Portfolio shift vs. daily trading rule. Journal of International
+  Economics, 34(3–4), 323–348.
+
+Honohan, P., and Shi, M. K. (2002). Deposit dollarization and the financial
+  sector in emerging economies. World Bank Policy Research Working Paper 2748.
+
+Ize, A., and Levy-Yeyati, E. (2003). Financial dedollarization. IMF Working Paper.
+
+Jeanne, O., and Rancière, R. (2011). The optimal level of international reserves
+  for emerging market countries. Journal of International Money and Finance,
+  30(5), 723–743.
+
+Kaminsky, G. L., Lizondo, S., and Reinhart, C. M. (1998). Leading indicators of
+  currency crises. IMF Staff Papers, 45(1), 1–48.
+
+Obstfeld, M., Shambaugh, J. C., and Taylor, A. M. (2010). Financial stability,
+  the trilemma, and international reserves. American Economic Journal:
+  Macroeconomics, 2(2), 57–94.
+
+================================================================================
+           APPENDIX A: FINANCIAL MAPPING OF SIMULATOR VARIABLES
+================================================================================
+
+Simulator Variable     | Finance Concept
+-----------------------|--------------------------------------------------
+exchangeRate           | Spot FX (LCY per USD)
+inflationPct           | CPI growth / real return erosion
+fxPressure             | Net FX demand stress index
+fxReserveStrength      | Official reserve adequacy (normalized)
+fxInterventionStrength | Central bank FX sales intensity
+interestRate           | Policy rate / local carry
+usdUsage               | Dollarization / USD asset share
+importCostIndex        | Import-COGS FX shock index
+stabilityScore         | Composite financial stability KPI
+System status          | Risk regime (Stable → Collapse)
+
+Source code: src/engine/simulation.ts, src/engine/types.ts, GUIDE.md
+
+================================================================================
+        APPENDIX B: SHOCK IMPACT ON BALANCE-SHEET PROXIES
+================================================================================
+
+Shock              | Duration | importDep bonus | inflation bonus | reserve bonus
+-------------------|----------|-----------------|-----------------|---------------
+Oil price spike    | 6 mo     | +14             | +0.12/month     | 0
+War / disruption   | 8 mo     | +22             | +0.20/month     | −6
+IMF bailout        | 10 mo    | 0               | −0.10/month     | +28
+
+Effective values clamped to [0, 100] after aggregation across stacked shocks.
+
+================================================================================
+                              END OF DOCUMENT
+================================================================================

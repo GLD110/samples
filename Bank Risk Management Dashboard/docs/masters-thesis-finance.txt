@@ -1,0 +1,467 @@
+================================================================================
+                    MASTER'S THESIS IN FINANCE
+================================================================================
+
+TITLE:
+  Integrated Credit, Liquidity, and Market Risk Measurement in a
+  Pedagogical Stress-Testing Framework
+
+SUBTITLE:
+  Design, specification, and validation of the Bank Risk Management Dashboard
+
+DEGREE PROGRAMME:
+  Master of Science in Finance (template — replace with your institution)
+
+AUTHOR:
+  [Your name]
+
+SUPERVISOR:
+  [Supervisor name]
+
+INSTITUTION:
+  [University name]
+
+DATE:
+  June 2026
+
+================================================================================
+                              ABSTRACT
+================================================================================
+
+Financial institutions measure and manage credit risk, liquidity risk, and
+market risk (including interest-rate risk) under regulatory and internal
+frameworks. Expected loss models decompose exposure into probability of
+default, loss given default, and exposure at default; liquidity metrics monitor
+funding stability; duration-based approximations quantify rate sensitivity of
+fixed-income and loan-like positions. Stress testing applies adverse scenarios
+to these measures before losses materialize.
+
+This thesis documents the Bank Risk Management Dashboard, a browser-based
+simulation that implements transparent formulas for all three risk types,
+combines them into aggregate exposure and a heuristic risk score, and supports
+stylized stress modes (recession, bank run, rate shock). A complementary AI
+Credit Default Engine—implemented without external machine-learning libraries—
+maps borrower and loan features to segment-level probabilities of default via
+a weighted linear score and logistic link, then aggregates portfolio expected
+default volume, AI expected loss, and a toy risk-weighted asset measure.
+
+The contribution is pedagogical and methodological: full mathematical
+specification aligned with source code, illustrative numerical validation,
+discussion of model risk and limitations relative to Basel and industry
+practice, and architecture suitable for finance education and prototype
+risk-reporting workflows. The system is not a substitute for regulatory capital
+engines or enterprise risk platforms.
+
+Keywords: bank risk management; expected loss; PD; LGD; EAD; liquidity stress;
+duration; interest-rate risk; stress testing; scorecard; logistic regression;
+risk-weighted assets; financial education
+
+================================================================================
+                         TABLE OF CONTENTS
+================================================================================
+
+  1. Introduction
+  2. Literature and institutional practice
+     2.1 Credit risk: PD, LGD, and EAD
+     2.2 Liquidity risk metrics and Basel III
+     2.3 Market risk and duration
+     2.4 Stress testing and scenario design
+     2.5 Interpretable credit scoring and model risk
+  3. Model specification
+     3.1 Notation and state vector
+     3.2 Stress adjustments
+     3.3 Credit risk module
+     3.4 Liquidity risk module
+     3.5 Market risk module
+     3.6 Aggregate metrics
+     3.7 AI credit default model
+     3.8 Portfolio aggregation and toy RWA
+     3.9 What-if sliders
+  4. Implementation and system architecture
+  5. Numerical scenarios and validation
+  6. Model risk, limitations, and extensions
+  7. Conclusion
+  References
+  Appendix A: Symbol-to-label mapping
+  Appendix B: Source code map
+  Appendix C: Export formats
+
+================================================================================
+                           1. INTRODUCTION
+================================================================================
+
+Risk management in commercial banking rests on quantifying three interacting
+exposures: borrowers may default (credit risk), funding may evaporate faster
+than assets can be monetized (liquidity risk), and rate-sensitive positions
+may lose value when yields shift (market risk, here focused on parallel rate
+shocks and duration). Post-crisis regulation formalized stress testing and
+liquidity standards; practitioners use complex engines while students often
+learn formulas in isolation.
+
+This thesis presents a unified, formula-driven teaching tool—the Bank Risk
+Management Dashboard—and specifies its mathematics in alignment with the
+reference implementation (TypeScript, React, Vite). Objectives:
+
+  (1) Encode recognizable steady-state metrics (expected loss, liquidity ratio,
+      duration-based loss) in one reproducible artifact.
+
+  (2) Demonstrate scenario layering through explicit stress adjustments.
+
+  (3) Contrast top-down portfolio default rates with bottom-up segment PDs via
+      an auditable scorecard styled like interpretable ML credit models.
+
+  (4) Document limitations so users do not confuse pedagogy with regulatory
+      compliance.
+
+Organization: Chapter 2 reviews practice; Chapter 3 gives full model math;
+Chapter 4 covers software; Chapter 5 validates numerically; Chapter 6 discusses
+model risk; Chapter 7 concludes.
+
+================================================================================
+              2. LITERATURE AND INSTITUTIONAL PRACTICE
+================================================================================
+
+2.1 Credit risk: PD, LGD, and EAD
+----------------------------------
+
+Industry and regulatory credit risk frameworks express expected loss as:
+
+  EL = EAD x PD x LGD
+
+The dashboard's classic module maps total loans to EAD, default rate (%) to
+PD, and (1 - recovery rate/100) to LGD:
+
+  EL = L x (d/100) x (1 - rho/100)
+
+Ordinal risk bands classify adjusted default rate d': Low if d' <= 2%;
+Medium if 2 < d' <= 5%; High if d' > 5%. This parallels rating-tier thinking
+without simulating migration matrices or credit value adjustment.
+
+2.2 Liquidity risk metrics and Basel III
+-----------------------------------------
+
+Basel III defines Liquidity Coverage Ratio (LCR) and Net Stable Funding Ratio
+(NSFR) with precise asset and liability categories. The dashboard uses a
+simplified liquidity ratio lambda = C/D and a stress withdrawal W = D*(w/100),
+with remaining cash R = C - W. Negative R triggers a bank-run warning—a
+binary liquidity failure flag for teaching, not LCR reporting.
+
+2.3 Market risk and duration
+----------------------------
+
+For small parallel yield shifts, the proportional price change of a
+fixed-income position is approximated by:
+
+  delta_V ≈ -D x V x delta_y
+
+The implementation uses loss as a positive number:
+
+  Loss_market = P x delta x (r/100)
+
+where r is in percentage points. A chart sweeps r in {1, 2, 3, 4} percent to
+show linear scaling—useful for introducing convexity limitations later.
+
+2.4 Stress testing and scenario design
+--------------------------------------
+
+Stress tests apply conditional shocks to inputs. The dashboard uses binary
+indicators with transparent transformations: d' = 1.8d (recession), w' = 2w
+(bank run), r' = r + 2 (rate shock). These are design parameters, not
+historical calibrations. Users may combine stresses to explore joint scenarios;
+correlation is not modeled endogenously.
+
+2.5 Interpretable credit scoring and model risk
+-----------------------------------------------
+
+Banks increasingly use statistical models (logistic regression, gradient
+boosting, neural nets) for PD estimation. Model risk management (SR 11-7 and
+international analogues) requires documentation, validation, and challenger
+models. The AI Credit Default Engine is deterministic: fixed weights, sigmoid
+link, no training data. It teaches structure—features, linear index, bounded
+PD—without opaque estimation, supporting assignments that require hand
+replication of PD from stated formulas.
+
+================================================================================
+                        3. MODEL SPECIFICATION
+================================================================================
+
+This section matches: src/models/riskEngine.ts (classic),
+src/ai/featureEngine.ts, src/ai/defaultModel.ts, src/simulation/riskEngine.ts.
+
+3.1 Notation and state vector
+------------------------------
+
+  L     Total loans
+  d     Default rate (%)
+  rho   Recovery rate (%)
+  D     Total deposits
+  C     Cash reserves
+  w     Withdrawal shock (% of deposits)
+  r     Interest rate change (% points)
+  P     Loan portfolio size (rate-sensitive)
+  delta Duration
+
+3.2 Stress adjustments
+----------------------
+
+Let I_rec, I_run, I_rate in {0,1}:
+
+  d' = 1.8*d  if I_rec=1, else d
+  w' = 2*w    if I_run=1, else w
+  r' = r+2    if I_rate=1, else r
+
+3.3 Credit risk module
+----------------------
+
+  EL = L * (d'/100) * (1 - rho/100)
+
+Twelve-month default-rate chart: d' plus sine-based drift and small random
+component, clipped to [0.2, 15] percent. Randomness on re-render is illustrative
+only—not Monte Carlo.
+
+3.4 Liquidity risk module
+-------------------------
+
+  lambda = C / D
+  W = D * (w'/100)
+  R = C - W
+  Bank run flag: R < 0
+
+3.5 Market risk module
+----------------------
+
+  Loss_market = P * delta * (r'/100)
+
+Chart: Loss_k = P * delta * (k/100) for k in {1,2,3,4}.
+
+3.6 Aggregate metrics
+---------------------
+
+  T = EL + Loss_market + max(0, -R)
+
+  S = min(100, max(0, (d'/12)*35 + (1-lambda)*30 + (r'/10)*35))
+
+Only liquidity shortfalls (R < 0) add to T via |R|; surplus cash does not
+offset credit and market loss in T.
+
+3.7 AI credit default model (segment level)
+-------------------------------------------
+
+Each segment i has: income category g_i in {low, medium, high}; DTI_i (%);
+credit score CS_i in [300,850]; interest rate IR_i (%); loan amount A_i;
+employment stability E_i in [0,1].
+
+Normalized features:
+  CS_hat_i = (850 - CS_i) / (850 - 300)   [weak-credit proxy]
+  DTI_hat_i = min(DTI_i, 100) / 100
+  IR_hat_i = min(IR_i, 40) / 100
+  E_hat_i = E_i clamped to [0,1]
+
+Income bias b(g): +0.3 low, +0.1 medium, -0.2 high.
+
+Linear score z_i:
+  z_i = -0.4*CS_hat_i + 0.3*DTI_hat_i + 0.2*IR_hat_i * m_infl
+        + b(g_i) - 0.3*E_eff_i
+
+where m_infl = 1.5 if inflation shock active else 1;
+E_eff_i = E_i/2 if job market crash else E_i.
+
+  PD_i_raw = 1 / (1 + exp(-z_i))
+  PD_i = min(1, 1.3 * PD_i_raw) if recession (AI) active; else PD_i_raw
+
+Risk labels: Low PD < 0.10; Medium 0.10 <= PD < 0.30; High PD >= 0.30.
+Amount A_i does not enter z_i; used in portfolio sums only.
+
+3.8 Portfolio aggregation and toy RWA
+-------------------------------------
+
+  LGD = 1 - rho/100
+
+  PD_bar = (1/n) * sum_i PD_i
+  V_def = sum_i A_i * PD_i
+  EL_AI = sum_i A_i * PD_i * LGD
+  RWA_toy = sum_i A_i * PD_i * 1.2
+
+High-risk count: segments with PD_i >= 0.30. Confidence label is heuristic from
+average credit score and employment—not a statistical confidence interval.
+
+3.9 What-if sliders
+-------------------
+
+Additive adjustments to DTI, credit score, and interest rate apply for scoring
+only without mutating stored segment rows—supporting sensitivity analysis in
+class.
+
+================================================================================
+              4. IMPLEMENTATION AND SYSTEM ARCHITECTURE
+================================================================================
+
+Stack: React, TypeScript, Vite, Tailwind CSS, Recharts. No backend.
+
+Layout:
+  - ControlPanel: inputs, classic stress toggles, AI Risk Mode switch, exports
+  - RiskCards, RiskIndicator: KPIs
+  - CreditRiskChart, LiquidityChart, MarketRiskChart: classic Recharts views
+  - AICreditPanel, AICreditSummary, AIPDHistogram, AIForecastTrend, RiskHeatmap
+
+Computation:
+  runRiskEngine(state) → classic metrics (useMemo in App.tsx)
+  runAIPortfolioRisk(loans, aiStress, recoveryRate) → AI aggregates
+
+Exports:
+  JSON: full engine output
+  CSV: headline metrics; AI rows when AI mode on
+  Loan PD CSV: id, pd, classification, loanAmount, linearScore per segment
+
+Development server: vite.config.ts may set host 0.0.0.0 for LAN demos.
+
+Separation of concerns: pure functions for credit, liquidity, market; AI feature
+engine and default model isolated; simulation layer for portfolio aggregation.
+
+================================================================================
+                 5. NUMERICAL SCENARIOS AND VALIDATION
+================================================================================
+
+Students should replicate these checks against on-screen KPIs.
+
+5.1 Credit expected loss
+-------------------------
+L = 100,000,000; d = 4%; rho = 50%.
+  EL = 100,000,000 * 0.04 * 0.5 = 2,000,000
+  Risk level: Medium (4% in (2,5])
+Recession: d' = 7.2%; EL = 3,600,000; risk → High.
+
+5.2 Liquidity
+-------------
+D = 120,000,000; C = 10,000,000; w = 15%.
+  W = 18,000,000; R = -8,000,000; lambda ≈ 8.33%
+  Bank run mode: w' = 30%; W = 36,000,000; deeper shortfall.
+
+5.3 Market loss
+---------------
+r = 2%; P = 80,000,000; delta = 4.
+  Loss_market = 80,000,000 * 4 * 0.02 = 6,400,000
+Rate shock: r' = 4%; loss doubles to 12,800,000.
+
+5.4 Composite
+-------------
+T includes max(0, -R) when liquidity fails. S moves with d', lambda, r'.
+
+5.5 AI monotonicity and stress
+------------------------------
+Raise CS → lower PD_i; raise DTI or IR → higher PD_i (ceteris paribus).
+Recession (AI): PD scaled by 1.3. Compare d'/100 to PD_bar for top-down vs
+bottom-up gap. Export loan PD CSV; verify PD_i = 1/(1+exp(-z_i)) by hand.
+
+5.6 Validation status
+---------------------
+Validation is deterministic replication, not back-testing. No out-of-sample
+ROC, no calibration to default data. Appropriate for a master's pedagogical
+artifact; insufficient for model approval in a regulated bank.
+
+================================================================================
+            6. MODEL RISK, LIMITATIONS, AND EXTENSIONS
+================================================================================
+
+Limitations (must be stated in any submission):
+
+  1. Single-period static inputs; no multi-period path or mark-to-market
+     dynamics beyond duration linearization.
+  2. No correlation model between credit, liquidity, and rates.
+  3. Credit chart randomness is not a Monte Carlo engine.
+  4. No Basel RWA formulas by asset class; RWA_toy = A*PD*1.2 only.
+  5. Scalar duration; no convexity, prepayment, or basis risk.
+  6. Stress multipliers are arbitrary teaching knobs.
+  7. AI weights fixed; no estimation, no PD term structure; confidence label
+     is heuristic.
+
+Model risk lessons: Students should articulate what validation would require in
+production (data quality, population stability, stress calibration, governance).
+
+Extensions for finance thesis follow-on work:
+  - Second-order convexity term in rate loss
+  - Correlated scenario draws with documented correlation matrix
+  - Minimal balance sheet with equity and capital ratio
+  - Calibration exercise on synthetic loan tape
+  - Integration with external PD/LGD data feeds
+
+Classroom: GUIDE.md test flows; PAPER.md for written assignments; AI_MODE.md
+for scorecard depth.
+
+================================================================================
+                           7. CONCLUSION
+================================================================================
+
+This finance thesis specified an integrated pedagogical framework for credit,
+liquidity, and market risk measurement, implemented in the Bank Risk Management
+Dashboard. The classic engine delivers expected loss, liquidity stress, and
+duration-based rate loss with transparent stress toggles and aggregate indices.
+The AI module demonstrates segment-level PD construction, portfolio aggregation,
+and traditional-versus-AI default-rate comparison without black-box machine
+learning.
+
+The artifact helps finance students see equations, change assumptions instantly,
+and articulate gaps versus institutional systems. It is intentionally simple
+for transparency; regulatory and enterprise use would require the extensions
+listed in Chapter 6.
+
+================================================================================
+                            REFERENCES
+================================================================================
+
+Basel Committee on Banking Supervision. Basel III liquidity and capital
+  standards. Bank for International Settlements.
+
+Board of Governors of the Federal Reserve System. Supervisory Guidance on
+  Model Risk Management (SR 11-7) — for discussion of validation norms.
+
+Hull, J. C. Options, Futures, and Other Derivatives. (Duration, interest-rate
+  sensitivity.)
+
+Saunders, A., & Cornett, M. M. Financial Institutions Management.
+
+Greenbaum, S. I., & Thakor, A. V. Contemporary Financial Intermediation.
+
+Course materials on credit risk (PD/LGD/EAD), Basel III liquidity, and
+  fixed-income duration — align with your programme reading list.
+
+================================================================================
+                    APPENDIX A: SYMBOL MAPPING
+================================================================================
+
+  L      → Total Loans
+  d      → Default Rate (%)
+  rho    → Recovery Rate (%)
+  D      → Total Deposits
+  C      → Cash Reserves
+  w      → Withdrawal Shock (%)
+  r      → Interest Rate Change (%)
+  P      → Loan Portfolio Size
+  delta  → Duration
+
+================================================================================
+                    APPENDIX B: SOURCE CODE MAP
+================================================================================
+
+  src/models/riskEngine.ts     calculateCreditRisk, calculateLiquidityRisk,
+                               calculateMarketRisk, runRiskEngine
+  src/ai/featureEngine.ts      LoanFeatures, buildLinearScore
+  src/ai/defaultModel.ts       calculateDefaultProbability, classification
+  src/simulation/riskEngine.ts runAIPortfolioRisk, simulateStressScenario
+  src/App.tsx                  State wiring, useMemo recomputation
+  src/utils/calculations.ts    Formatting, JSON/CSV export
+  src/components/*             UI panels and charts
+
+================================================================================
+                    APPENDIX C: EXPORT FORMATS
+================================================================================
+
+  JSON export: structured output from runRiskEngine (and AI fields when enabled)
+  CSV export: KPI rows; additional AI portfolio metrics when AI Risk Mode on
+  Loan PD CSV: per-segment id, pd, classification, loanAmount, linearScore
+
+================================================================================
+Document version: 1.0 — Finance master's thesis template.
+Accompanies the Bank Risk Management Dashboard student project.
+Replace bracketed metadata with your institution's requirements.
+================================================================================
