@@ -1,0 +1,294 @@
+================================================================================
+MASTER'S THESIS OUTLINE — ECONOMICS
+================================================================================
+
+Project base: Banking System Simulation (US vs China)
+Repository: src/simulation/bankingModel.ts, interactive dashboard (GUIDE.md)
+Scope: Stylized comparative monetary transmission — illustrative, not
+       forecasting unless you add an empirical chapter.
+
+--------------------------------------------------------------------------------
+1. PURPOSE OF THIS DOCUMENT
+--------------------------------------------------------------------------------
+
+This file is a department-oriented template for an economics master's thesis
+built on the side-by-side US (interest-rate constraint) vs China
+(reserve-requirement constraint) simulation. Adapt section titles and page
+targets to your university's regulations and your supervisor's preferences.
+
+Economics emphasis: institutions, monetary transmission, comparative macro,
+policy trade-offs, and (optionally) time-series evidence. The web app supports
+transparency; the thesis argument lives in equations, scenarios, and
+interpretation.
+
+--------------------------------------------------------------------------------
+2. PROPOSED TITLES
+--------------------------------------------------------------------------------
+
+Choose one direction and refine with your supervisor.
+
+1. Monetary transmission through credit and deposits: a stylized comparison
+   of interest-rate and reserve-requirement regimes
+
+2. Comparative dynamics of bank credit under alternative policy instruments —
+   US and China in a reduced-form simulation
+
+3. Deposit shocks and policy constraints: ceteris paribus experiments in a
+   dual-regime banking model
+
+Subtitle (recommended): A discrete-time simulation with policy and crisis
+scenarios
+
+--------------------------------------------------------------------------------
+3. RESEARCH QUESTIONS
+--------------------------------------------------------------------------------
+
+Select two or three; the rest can be secondary or appendix.
+
+RQ1  How do lending capacity, credit, and deposits evolve when the policy
+     constraint takes the form of an interest rate (US stylization) versus a
+     reserve requirement ratio (China stylization), holding initial deposits
+     and shock timing equal?
+
+RQ2  After a common deposit shock (-20% at mid-horizon), which regime exhibits
+     faster credit recovery and larger cumulative deposit loss, and how does
+     that depend on adjustment speeds?
+
+RQ3  How do recession mode (slower credit adjustment) and stimulus mode
+     (stronger deposit creation from credit growth) alter comparative outcomes?
+
+RQ4  (optional, empirical) Do impulse-like responses from the model align
+     qualitatively with VAR or descriptive evidence on credit and monetary
+     aggregates in the US and China?
+
+--------------------------------------------------------------------------------
+4. CONTRIBUTIONS (WHAT YOU CLAIM)
+--------------------------------------------------------------------------------
+
+State these explicitly in the introduction; defend them in the conclusion.
+
+1. Comparative institutional mapping — Links real US and China policy
+   toolkits to a single reduced-form constraint pi in capacity K_t = D_t(1-pi).
+
+2. Transparent reproducible model — Full discrete-time specification, parameter
+   table, and open implementation (appendix + code).
+
+3. Systematic scenario analysis — Grid over policy levels, shock on/off,
+   recession/stimulus modes, with comparable metrics across regimes.
+
+4. (If RQ4 included) Stylized facts / weak validation — Narrative or
+   statistical alignment with data moments, not structural estimation of the
+   full model.
+
+What you do not claim: point forecasts of GDP, proof of welfare dominance of
+one system, or causal identification of country differences from the toy model
+alone.
+
+--------------------------------------------------------------------------------
+5. ABSTRACT TEMPLATE (150–300 WORDS)
+--------------------------------------------------------------------------------
+
+    This thesis develops a stylized discrete-time model of bank credit and
+    deposits under two policy constraints: an interest-rate wedge (US) and a
+    reserve-requirement ratio (China). Lending capacity scales with deposits
+    and the constraint; credit adjusts partially toward capacity each period,
+    with faster adjustment in the China stylization; credit growth feeds
+    deposit creation. A synchronized deposit shock and optional recession and
+    stimulus modes generate comparative dynamic paths for credit, deposits, and
+    a GDP proxy (credit x 1.2). Using [N] simulation scenarios and sensitivity
+    analysis over [parameters], I show that [main finding 1] and [main finding
+    2]. The results illustrate how instrument choice and adjustment speeds
+    shape transmission after shocks, within the limits of a pedagogical reduced
+    form. [Optional: Comparison with stylized facts from US/China credit series
+    suggests qualitative consistency with …] The thesis contributes a
+    reproducible framework for teaching and policy intuition, not empirical
+    forecasting.
+
+Fill bracketed sections after you run your scenario matrix.
+
+--------------------------------------------------------------------------------
+6. CHAPTER STRUCTURE (ECONOMICS)
+--------------------------------------------------------------------------------
+
+Typical length: 60–90 pages (excluding appendices); confirm locally.
+
+CHAPTER 1 — INTRODUCTION (8–12 pages)
+  - Motivation: different monetary architectures (price vs quantity levers;
+    US vs China).
+  - Research questions and hypotheses (e.g. faster adjustment implies sharper
+    post-shock credit paths).
+  - Contributions and structure of the thesis.
+  - Limitations (reduced form, parallel shocks, GDP proxy).
+
+CHAPTER 2 — LITERATURE REVIEW (12–18 pages)
+  Organize by theme, not alphabetically.
+
+  Theme                          | Example topics
+  -------------------------------|----------------------------------------------
+  Credit channel                 | Bernanke–Gertler; bank lending channel
+  Money and deposits             | Money multiplier; endogenous money
+  Reserve requirements           | PBoC RRR; liquidity management in China
+  US monetary policy             | Federal funds to bank rates to lending
+  Comparative central banking    | Tool mix; state-owned banks (China)
+  Simulation / teaching models   | ABM and reduced-form macro pedagogy
+
+  End with a gap paragraph: need for a transparent comparative experiment with
+  common shock and metrics.
+
+CHAPTER 3 — INSTITUTIONAL AND POLICY BACKGROUND (10–14 pages)
+  - United States: policy rate, transmission to bank lending and deposits.
+  - China: RRR, other tools (window guidance, MLF), credit and deposit aggregates.
+  - Mapping to the model: justify pi_US = i, pi_CN = rho; discuss omissions
+    (FX, capital controls, shadow banking, fiscal dominance).
+  - Table: real instruments <-> model parameters.
+
+CHAPTER 4 — THEORETICAL MODEL (12–16 pages)
+
+  4.1 Setup
+  Two parallel systems j in {US, CN}, discrete time t = 0,...,T-1.
+
+  State variables: deposits D_t, credit C_t.
+
+  Policy constraint: pi_US = i in [0, 0.2], pi_CN = rho in [0, 0.5].
+
+  Capacity (stimulus boost phi in {1, 1.04}):
+    K_t = D_t * (1 - pi_j) * phi
+
+  Credit adjustment (alpha_US, alpha_CN depend on recession mode):
+    C_t = C_{t-1} + alpha_j * (K_t - C_{t-1})
+
+  Deposit evolution (mu in {0.52, 0.82} with stimulus):
+    D_t = D_{t-1} + mu * max(0, C_t - C_{t-1})
+
+  Deposit shock at step t*: D <- 0.8 * D (both systems).
+
+  GDP proxy: Y_t = kappa * C_t, kappa = 1.2
+
+  Implementation: src/simulation/bankingModel.ts (runSimulation)
+
+  4.2 Baseline parameters (from code)
+
+  Symbol      | Normal US | Normal CN | Recession | Stimulus
+  ------------|-----------|-----------|-----------|----------
+  alpha_US    | 0.18      | —         | 0.08      | —
+  alpha_CN    | —         | 0.34      | 0.14      | —
+  mu          | 0.52      | 0.52      | 0.52      | 0.82
+  phi         | 1         | 1         | 1         | 1.04
+
+  4.3 Comparative statics and steady-state discussion
+  - Effect of raising i or rho on capacity and long-run credit.
+  - Role of alpha (speed) vs pi (level constraint).
+
+CHAPTER 5 — METHODOLOGY AND EXPERIMENTAL DESIGN (8–12 pages)
+  - Deterministic simulation (no stochastic shocks unless extended).
+  - Scenario matrix (minimum 12 runs — see Section 8).
+  - Metrics: peak-to-trough credit; steps to 90% recovery; cumulative deposit
+    change; divergence US–CN at horizon T.
+  - Sensitivity: heatmaps over alpha, mu, and policy levels.
+  - Replication: batch runs in Python/R mirroring bankingModel.ts.
+
+CHAPTER 6 — RESULTS (12–18 pages)
+  - Baseline paths (credit, deposits, GDP proxy).
+  - Shock experiment (mid-horizon -20% deposits).
+  - Recession vs stimulus modes.
+  - Sensitivity tables and robustness.
+  - Interpretation: regime comparison under shared assumptions (not causal
+    country claims).
+
+CHAPTER 7 — OPTIONAL EMPIRICAL STYLIZED FACTS (8–14 pages)
+  Include if your program expects econometrics.
+  - Data: FRED (US); China TSF or bank loans (official statistics).
+  - Descriptive: growth, volatility, autocorrelation.
+  - Optional: bivariate VAR — compare impulse direction to model.
+  - Model is not full structural MLE estimation.
+
+CHAPTER 8 — DISCUSSION AND POLICY IMPLICATIONS (6–10 pages)
+CHAPTER 9 — CONCLUSION (4–6 pages)
+REFERENCES
+APPENDICES A–D (equations, scenarios, code, ethics forms)
+
+--------------------------------------------------------------------------------
+7. HYPOTHESES (TEST VIA SIMULATION)
+--------------------------------------------------------------------------------
+
+H1  Higher pi reduces steady-state credit holding deposits fixed.
+H2  Larger alpha_CN yields faster convergence of C_t to K_t after policy change.
+H3  Deposit shock reduces credit more when alpha is low (recession mode).
+H4  Stimulus mode raises deposit growth for a given credit path.
+
+Report: supported / not supported / ambiguous under your parameter grid.
+
+--------------------------------------------------------------------------------
+8. MINIMUM SCENARIO MATRIX
+--------------------------------------------------------------------------------
+
+#   i     rho   Shock  Recession  Stimulus  Notes
+--  ----  ----  -----  ---------  --------  ---------------------
+1   0.03  0.12  No     No         No        Low policy tightness
+2   0.05  0.15  No     No         No        BASELINE
+3   0.08  0.20  No     No         No        Tighter
+4   0.05  0.15  Yes    No         No        Crisis only
+5   0.05  0.15  Yes    Yes        No        Crisis + recession
+6   0.05  0.15  Yes    No         Yes       Crisis + stimulus
+7-12  …   …     …      …          …         Extend for sensitivity
+
+Fixed defaults: initialDeposits = 5000, steps = 50,
+shockStep = floor(steps/2) when shock is on.
+
+--------------------------------------------------------------------------------
+9. KEY LITERATURE STARTING POINTS
+--------------------------------------------------------------------------------
+
+- Bernanke — credit channel
+- Kashyap and Stein — lending channel
+- China financial system surveys (Brunnermeier et al.)
+- PBoC / IMF working papers on RRR
+- Money and banking textbooks (multiplier vs endogenous money)
+
+Maintain Zotero/EndNote from month one.
+
+--------------------------------------------------------------------------------
+10. TIMELINE (12 MONTHS, PART-TIME)
+--------------------------------------------------------------------------------
+
+Month 1      Proposal, supervisor sign-off
+Month 2–3    Literature + institutions draft
+Month 4      Model frozen; batch script matches TypeScript
+Month 5–6    Scenario matrix + Ch. 6 figures
+Month 7      Optional empirical stylized facts
+Month 8–10   Full draft
+Month 11     Revision
+Month 12     Defense preparation
+
+--------------------------------------------------------------------------------
+11. DEFENSE CHECKLIST
+--------------------------------------------------------------------------------
+
+[ ] Every figure has a source run (script version, parameters)
+[ ] Limitations in introduction and conclusion
+[ ] US and China = stylized regimes, not full structural economies
+[ ] Parameters justified (literature, sensitivity, or calibration)
+[ ] Reproducibility: commit hash cited in appendix
+
+--------------------------------------------------------------------------------
+12. SUPERVISOR MEETING AGENDA (FIRST MEETING)
+--------------------------------------------------------------------------------
+
+1. Is stylized simulation acceptable without full DSGE?
+2. Is Chapter 7 (empirical) required or optional?
+3. Thesis language (English / bilingual)?
+4. Page limit and citation style?
+5. Use React project as appendix only?
+
+--------------------------------------------------------------------------------
+13. FILE MAP (THIS REPOSITORY)
+--------------------------------------------------------------------------------
+
+src/simulation/bankingModel.ts  — Source of truth for equations
+GUIDE.md                        — Parameter descriptions
+docs/THESIS_FINANCE.txt         — Parallel finance track outline
+Exported CSV from app           — Quick checks; thesis figures from batch code
+
+--------------------------------------------------------------------------------
+Template version 1.0 — economics track. Edit for your university requirements.
+--------------------------------------------------------------------------------

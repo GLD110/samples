@@ -1,0 +1,250 @@
+================================================================================
+MASTER'S THESIS OUTLINE — FINANCE
+================================================================================
+
+Project base: Banking System Simulation (US vs China)
+Repository: src/simulation/bankingModel.ts, interactive dashboard (GUIDE.md)
+Scope: Comparative bank credit, deposit dynamics, and financial-stability-style
+       metrics under alternative policy constraints — illustrative unless you add
+       calibration or empirical validation.
+
+--------------------------------------------------------------------------------
+1. PURPOSE OF THIS DOCUMENT
+--------------------------------------------------------------------------------
+
+Department-oriented template for a finance master's thesis using the US vs
+China banking simulation. Finance programs typically expect stronger quantitative
+rigor, explicit risk and stability metrics, and clearer links to banking and
+credit markets than a pure macro-institutions narrative.
+
+Finance emphasis: credit supply, deposit funding, crisis transmission,
+sensitivity and scenario analysis, optional calibration to banking aggregates.
+The dashboard is a communication tool; examiners focus on model specification,
+metrics, and robustness.
+
+--------------------------------------------------------------------------------
+2. PROPOSED TITLES
+--------------------------------------------------------------------------------
+
+1. Credit and deposit dynamics under alternative regulatory constraints: a
+   comparative simulation of rate-based vs reserve-based banking regimes
+
+2. Financial stability metrics in a dual-regime credit model: deposit shocks and
+   policy modes in stylized US and China banking
+
+3. Transmission of funding shocks to bank lending: reduced-form experiments with
+   interest-rate and reserve-requirement wedges
+
+Subtitle (recommended): Deterministic scenario analysis with reproducible
+implementation
+
+--------------------------------------------------------------------------------
+3. RESEARCH QUESTIONS
+--------------------------------------------------------------------------------
+
+Select two or three primary questions.
+
+RQ1  How do lending capacity and credit utilization (C/K) differ between a
+     rate-constrained and an RRR-constrained regime for comparable tightness of pi?
+
+RQ2  What is the impact of a deposit shock on credit paths, and which regime
+     shows shorter recovery time and lower maximum drawdown in credit?
+
+RQ3  How sensitive are credit volatility and terminal credit to adjustment
+     speeds alpha and money-creation parameter mu?
+
+RQ4  Under recession vs stimulus modes, which regime benefits more in deposit
+     replenishment and credit restoration after a shock?
+
+RQ5  (optional) Can bounded calibration of (i, rho, alpha, mu) match selected
+     moments of US and China bank credit growth (volatility, persistence)?
+
+--------------------------------------------------------------------------------
+4. CONTRIBUTIONS (FINANCE FRAMING)
+--------------------------------------------------------------------------------
+
+1. Comparative banking reduced form — Two policy wedges affecting loanable
+   capacity from deposits.
+
+2. Stability-oriented metrics — Drawdown, recovery time, credit–deposit ratios,
+   divergence under common shocks.
+
+3. Reproducible scenario engine — Documented parameters, batch replication,
+   appendix code.
+
+4. (Optional) Moment matching with publicly available credit series.
+
+Explicit non-claims: alpha generation, optimal monetary policy, bank equity
+pricing, or Basel capital — unless you extend the model.
+
+--------------------------------------------------------------------------------
+5. ABSTRACT TEMPLATE (150–300 WORDS)
+--------------------------------------------------------------------------------
+
+    Bank credit and deposit funding interact with policy constraints that differ
+    across financial systems. This thesis specifies a discrete-time model in
+    which lending capacity equals deposits scaled by (1-pi), with pi as an
+    interest-rate wedge (US) or reserve requirement ratio (China). Credit
+    converges toward capacity at regime-specific speeds; lending growth feeds
+    deposit creation. I simulate [N] policy and crisis scenarios, including a
+    synchronized 20% deposit shock, recession mode (slower adjustment), and
+    stimulus mode (stronger deposit feedback). Financial-stability metrics include
+    credit drawdown, recovery horizons, and sensitivity to key parameters. Results
+    indicate [finding 1] and [finding 2]. The model is illustrative and
+    deterministic; [optional: moment targets met within bands X–Y]. The
+    contribution is a transparent laboratory for comparative credit–deposit
+    dynamics rather than a forecasting system for macro aggregates.
+
+--------------------------------------------------------------------------------
+6. CHAPTER STRUCTURE (FINANCE)
+--------------------------------------------------------------------------------
+
+Typical length: 50–80 pages plus appendices (confirm: MFin / MSc Finance / MQF).
+
+CHAPTER 1 — INTRODUCTION (6–10 pages)
+CHAPTER 2 — LITERATURE REVIEW (10–16 pages)
+  Blocks: bank lending channel; deposits and funding; reserve requirements;
+  interest rates and margins; financial stability; simulation in finance education.
+
+CHAPTER 3 — FINANCIAL AND REGULATORY CONTEXT (8–12 pages)
+  Mapping table: instrument -> pi; omissions (capital, NPLs, interbank market).
+
+CHAPTER 4 — MODEL SPECIFICATION (10–14 pages)
+
+  4.1 Balance-sheet intuition
+  Deposits D fund capacity; Credit C <= K; expansion feeds D via mu.
+
+  4.2 Equations (aligned with code)
+    K_t = D_t * (1 - pi_j) * phi
+    C_t = C_{t-1} + alpha_j * (K_t - C_{t-1})
+    D_t = D_{t-1} + mu * max(0, C_t - C_{t-1})
+  Shock: D <- 0.8 * D at t = t*.  Output proxy: Y_t = 1.2 * C_t.
+  Code: src/simulation/bankingModel.ts
+
+  4.3 Parameter domains
+    i     [0, 0.20]   US wedge
+    rho   [0, 0.50]   China RRR stylization
+    D_0   [1000, 10000]
+    Steps [10, 100]
+
+  4.4 Optional extensions: NPL drag on alpha; stochastic shocks; utilization u = C/K
+
+CHAPTER 5 — DATA AND CALIBRATION (optional but recommended)
+CHAPTER 6 — METHODOLOGY: SCENARIOS AND METRICS (8–12 pages)
+CHAPTER 7 — RESULTS (12–16 pages)
+CHAPTER 8 — ROBUSTNESS AND DISCUSSION (6–10 pages)
+CHAPTER 9 — CONCLUSION (4–6 pages)
+REFERENCES + APPENDICES A–D
+
+--------------------------------------------------------------------------------
+6.2 FINANCIAL METRICS (DEFINE IN THESIS)
+--------------------------------------------------------------------------------
+
+Credit drawdown     (C_max - C_min) / C_max after shock
+Recovery time       First t with C_t >= 0.9 * C_{t*-1}
+Credit–deposit      C_t / D_t
+Utilization         C_t / K_t
+Regime divergence   |C_t^US - C_t^CN| at T
+Path volatility     sum |C_t - C_{t-1}| or std of Delta log C
+
+--------------------------------------------------------------------------------
+7. HYPOTHESES (FINANCE-ORIENTED)
+--------------------------------------------------------------------------------
+
+H1  Tighter pi lowers utilization and steady-state credit.
+H2  Deposit shock produces larger drawdown when alpha is small.
+H3  China stylization (higher alpha) reaches capacity faster after policy loosening.
+H4  Stimulus mode shortens recovery time after shock.
+
+--------------------------------------------------------------------------------
+8. SCENARIO MATRIX (MINIMUM)
+--------------------------------------------------------------------------------
+
+ID   i     rho   Shock  Recession  Stimulus  Primary metrics
+---  ----  ----  -----  ---------  --------  ---------------------------
+F1   0.05  0.15  No     No         No        Baseline paths
+F2   0.05  0.15  Yes    No         No        Drawdown, recovery
+F3   0.05  0.15  Yes    Yes        No        H2
+F4   0.05  0.15  Yes    No         Yes       H4
+F5-8 low/high i,rho — capacity binding
+F9-12 sensitivity on alpha, mu
+
+Defaults: initialDeposits = 5000, steps = 50, shock at midpoint.
+
+(See docs/THESIS_ECONOMICS.txt Section 8 for extended economics grid.)
+
+--------------------------------------------------------------------------------
+9. EMPIRICAL / CALIBRATION APPENDIX (FINANCE TRACK)
+--------------------------------------------------------------------------------
+
+1. Download US/China bank credit series.
+2. Compute growth, vol, AR(1).
+3. Choose (i, rho) so model credit-growth vol lies in [q25, q75] of data.
+4. Figure: data vs model growth distributions (not forecast).
+5. State: calibration to moments, not structural estimation.
+
+--------------------------------------------------------------------------------
+10. DIFFERENCES VS ECONOMICS TRACK
+--------------------------------------------------------------------------------
+
+Aspect        | Economics (THESIS_ECONOMICS.txt) | Finance (this file)
+--------------|------------------------------------|---------------------------
+Narrative     | Monetary transmission            | Credit supply, stability
+Empirical     | VAR / stylized facts             | Moment matching, drawdown
+Theory        | Steady state, policy debate        | Utilization, NPL extension
+Literature    | Comparative CB                     | Banking, regulation
+Metrics       | Macro aggregates                   | Drawdown, recovery, ratios
+
+Pick one lead department if co-supervised.
+
+--------------------------------------------------------------------------------
+11. TIMELINE (10–12 MONTHS)
+--------------------------------------------------------------------------------
+
+Proposal 4–6 wk | Model + code parity 4 wk | Scenarios 8 wk |
+Calibration 4 wk (opt) | Writing 10 wk | Revision 4 wk
+
+--------------------------------------------------------------------------------
+12. RISK REGISTER (EXAMINER QUESTIONS)
+--------------------------------------------------------------------------------
+
+Why GDP = 1.2 x credit?     Reduced-form proxy; robustness on kappa.
+Same mu for US and China?   Ceteris paribus; sensitivity on mu.
+Econometrically identified? No — stylized regimes; descriptive/moment empirics.
+Where is risk?              Drawdown/recovery; optional stochastic extension.
+
+--------------------------------------------------------------------------------
+13. SUBMISSION PACKAGE CHECKLIST
+--------------------------------------------------------------------------------
+
+[ ] Thesis PDF equations match code
+[ ] Git tag cited in appendix
+[ ] requirements.txt or environment.yml for batch scripts
+[ ] Figures labeled with scenario IDs (F1, F2, …)
+[ ] Data sources and download dates documented
+[ ] Disclaimer: illustrative simulation (GUIDE.md)
+
+--------------------------------------------------------------------------------
+14. REPOSITORY CROSS-REFERENCE
+--------------------------------------------------------------------------------
+
+src/simulation/bankingModel.ts   Equation source
+GUIDE.md                         Parameter descriptions
+docs/THESIS_ECONOMICS.txt        Alternative chapter emphasis
+src/components/ControlPanel.tsx  UI parameter ranges
+
+--------------------------------------------------------------------------------
+15. SUGGESTED FIGURE LIST
+--------------------------------------------------------------------------------
+
+1. Baseline credit and deposits — US vs CN (F1)
+2. Utilization C_t/K_t over time (F1)
+3. Shock with drawdown annotated (F2)
+4. Recession vs normal after shock (F2 vs F3)
+5. Stimulus vs normal after shock (F2 vs F4)
+6. Sensitivity heatmap: recovery vs (alpha_US, alpha_CN)
+7. (Optional) Data vs simulated credit growth distributions
+
+--------------------------------------------------------------------------------
+Template version 1.0 — finance track. Edit for your university requirements.
+--------------------------------------------------------------------------------
